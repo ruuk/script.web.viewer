@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="script.web.viewer"
+       name="Forum Browser"
+       version="0.7.0"
+       provider-name="Rick Phillips (ruuk)">
+  <requires>
+    <import addon="xbmc.python" version="1.0"/>
+    <import addon="script.module.beautifulsoup" version="3.0.8.1"/>
+  </requires>
+  <extension point="xbmc.python.script"
+             library="default.py">
+    <provides>executable</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <platform>all</platform>
+    <summary lang="en">Simple web page browser</summary>
+    <description lang="en">View web page text and images and follow links.</description>
+  </extension>
+</addon>

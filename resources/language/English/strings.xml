@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<strings>
+    <!-- All %s must remain in string but can change position -->
+    <string id="30000">General</string>
+</strings>
