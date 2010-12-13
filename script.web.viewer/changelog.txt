@@ -1,0 +1,7 @@
+Forum Browser Changelog
+
+Current Version : 0.7.0
+
+*** 0.7.0 ***
+
+Initial public beta release
