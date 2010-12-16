@@ -1,5 +1,5 @@
 <window>
-  <defaultcontrol>123</defaultcontrol>
+  <defaultcontrol>122</defaultcontrol>
   <coordinates>
     <system>1</system>
     <posx>0</posx>
@@ -93,7 +93,7 @@
             <visible>true</visible>
       </control>
       
-      <control type="textbox" id="122">
+      <!--<control type="textbox" id="122">
         <posx>30</posx>
         <posy>100</posy>
         <width>1205</width>
@@ -105,6 +105,70 @@
         <scroll>true</scroll>
         <textcolor>FF000000</textcolor>
         <visible>true</visible>
+      </control>-->
+      <control type="list" id="122">
+        <posx>30</posx>
+        <posy>100</posy>
+        <width>1205</width>
+        <height>606</height>
+        <onleft>147</onleft>
+         <onright>149</onright>
+         <onup>122</onup>
+         <ondown>122</ondown>
+        <viewtype label="535">list</viewtype>
+        <pagecontrol>123</pagecontrol>
+        <scrolltime>200</scrolltime>
+        <itemlayout height="0">
+          <control type="textbox">
+            <posx>210</posx>
+            <posy>15</posy>
+            <width>1025</width>
+            <height>55</height>
+            <font>font12</font>
+            <aligny>center</aligny>
+            <textcolor>black</textcolor>
+            <selectedcolor>black</selectedcolor>
+            <align>left</align>
+            <info>ListItem.Label</info>
+            <visible>false</visible>
+            <scroll>false</scroll>
+            <wrapmultiline>true</wrapmultiline>
+          </control>
+        </itemlayout>
+        <focusedlayout height="606">
+          <control type="textbox">
+            <posx>0</posx>
+            <posy>0</posy>
+            <width>1205</width>
+            <height>606</height>
+            <font>font12</font>
+            <aligny>center</aligny>
+            <textcolor>black</textcolor>
+            <selectedcolor>black</selectedcolor>
+            <align>left</align>
+            <info>ListItem.Label</info>
+            <visible>true</visible>
+          </control>
+        </focusedlayout>
+      </control>
+      <control type="group">
+        <posx>1258</posx>
+        <posy>100</posy>
+        <control type="scrollbar" id="123">
+          <description>scroll bar indicator for lists</description>
+          <posx>0</posx>
+          <posy>0</posy>
+          <width>12</width>
+          <height>606</height>
+          <texturesliderbackground border="6">default-scroll_back.png</texturesliderbackground>
+          <texturesliderbar border="6">default-scroll_mid.png</texturesliderbar>
+          <texturesliderbarfocus border="6">default-scroll_mid.png</texturesliderbarfocus>
+          <textureslidernib>-</textureslidernib>
+          <textureslidernibfocus>-</textureslidernibfocus>
+          <orientation>vertical</orientation>
+          <showonepage>false</showonepage>
+          <visible>Control.IsVisible(122)</visible>
+        </control>
       </control>
       <control type="image">
             <description>page header tab icon</description>
@@ -116,7 +180,7 @@
             <visible>false</visible>
       </control>
       
-      <control type="scrollbar" id="123">
+      <!--<control type="scrollbar" id="123">
          <description>Message Scrollbar</description>
          <posx>1258</posx>
          <posy>90</posy>
@@ -134,7 +198,7 @@
          <orientation>vertical</orientation>
          <showonepage>true</showonepage>
          <visible>Control.IsVisible(122)</visible>
-      </control>
+      </control>-->
       
       <control type="image" id="300">
         <posx>10</posx>
@@ -171,8 +235,8 @@
             <posy>0</posy>
             <width>315</width>
             <height>720</height>
-            <onleft>123</onleft>
-            <onright>123</onright>
+            <onleft>122</onleft>
+            <onright>122</onright>
             <onup>150</onup>
             <ondown>150</ondown>
             <viewtype label="535">list</viewtype>
@@ -286,8 +350,8 @@
             <posy>0</posy>
             <width>515</width>
             <height>720</height>
-            <onleft>123</onleft>
-            <onright>123</onright>
+            <onleft>122</onleft>
+            <onright>122</onright>
             <onup>148</onup>
             <ondown>148</ondown>
             <viewtype label="535">list</viewtype>

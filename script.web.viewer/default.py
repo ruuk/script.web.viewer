@@ -38,11 +38,11 @@ ACTION_RUN_IN_MAIN = 27
 
 def ERROR(message):
 	errtext = sys.exc_info()[1]
-	print 'FORUMBROWSER - %s::%s (%d) - %s' % (message,sys.exc_info()[2].tb_frame.f_code.co_name, sys.exc_info()[2].tb_lineno, errtext)
+	print 'WEBVIEWER - %s::%s (%d) - %s' % (message,sys.exc_info()[2].tb_frame.f_code.co_name, sys.exc_info()[2].tb_lineno, errtext)
 	return str(errtext)
 	
 def LOG(message):
-	print 'FORUMBROWSER: %s' % message
+	print 'WEBVIEWER: %s' % message
 
 def clearDirFiles(filepath):
 	if not os.path.exists(filepath): return
@@ -51,13 +51,24 @@ def clearDirFiles(filepath):
 		if os.path.isfile(f): os.remove(f)
 		
 class WebReader:
-	def __init__(self,forum,always_login=False):
+	def __init__(self):
 		self.browser = mechanize.Browser()
+		self.browser.set_handle_robots(False)
+		self.browser.addheaders = [('User-agent', 'Mozilla/3.0 (compatible)')]
 		
 	def getWebPage(self,url,callback=None):
 		if not callback: callback = self.fakeCallback
-		html = self.readURL(url, callback)
-		return WebPage(html)
+		html = ''
+		id = ''
+		urlsplit = url.split('#',1)
+		if len(urlsplit) > 1: url,id = urlsplit
+		try:
+			html = self.readURL(url, callback)
+		except:
+			err = ERROR('ERROR READING PAGE')
+			LOG('URL: %s' % url)
+			xbmcgui.Dialog().ok('ERROR','Error loading page.',err)
+		return WebPage(html,url,id=id)
 	
 	def readURL(self,url,callback):
 		response = self.browser.open(url)
@@ -135,14 +146,25 @@ class WebReader:
 # Web Page
 ################################################################################
 class WebPage:
-	def __init__(self,html):
+	def __init__(self,html,url,id=''):
+		self.url = url
 		self.html = html
+		self.id = id
 		
 	def forDisplay(self):
 		return HC.htmlToDisplay(self.html)
+	
+	def forDisplayWithIDs(self):
+		return HC.htmlToDisplayWithIDs(self.html)
 		
 	def imageURLs(self):
-		return HC.imageFilter.findall(self.html,re.S)
+		urls = []
+		for url in HC.imageFilter.findall(self.html,re.S):
+			for u in urls:
+				if u == url: break
+			else:
+				urls.append(url)
+		return urls
 		
 	def linkImageURLs(self):
 		return re.findall('<a.+?href="(http://.+?\.(?:jpg|png|gif|bmp))".+?</a>',self.html,re.S)
@@ -152,32 +174,69 @@ class WebPage:
 		
 	def links(self):
 		links = []
-		for m in self.linkURLs(): links.append(Link(m))
+		for m in self.linkURLs(): links.append(Link(m,self.url))
 		return links
 
 class Link:
-	def __init__(self,match=None):
+	def __init__(self,match=None,url=''):
+		self.baseUrl = url
 		self.url = ''
 		self.text = ''
 		self._isImage = False
 		
 		if match:
 			self.url = match.group('url')
-			text = match.group('text')
-			self.text = HC.tagFilter.sub('',text).strip()
+			text = match.group('text') 
+			text = HC.tagFilter.sub('',text).strip()
+			self.text = HC.convertHTMLCodes(unicode(text,'utf8'))
 		self.processURL()
 			
 	def processURL(self):
 		if not self.url: return
+		self.url = self.url.replace('&amp;','&')
 		self._isImage = re.search('http://.+?\.(?:jpg|png|gif|bmp)',self.url) and True or False
 		if self._isImage: return
 			
 	def urlShow(self):
-		return self.url
+		return self.fullURL()
 		
 	def isImage(self):
 		return self._isImage
+	
+	def fullURL(self):
+		return fullURL(self.baseUrl,self.url)
 
+def fullURL(baseUrl,url):
+		if not url.startswith('http://'):
+			base = baseUrl.split('://',1)[-1]
+			domain = base.split('/',1)[0]
+			if url.startswith('/'):
+				if url.startswith('//'):
+					return 'http:' + url
+				else:
+					return 'http://' + domain + url
+			else:
+				if not base.endswith('/'): base += '/'
+				return 'http://' + base + url
+		return url
+
+class URLHistory:
+	def __init__(self,url=''):
+		self.index = 0
+		self.urls = [url]
+		self.lines = [0]
+		
+	def addURL(self,url,line=0,old_line=None):
+		if old_line: self.lines[self.index] = old_line
+		self.urls.append(url)
+		self.lines.append(line)
+		self.index += 1
+		
+	def goBack(self):
+		self.index -= 1
+		if self.index < 0: self.index = 0
+		return self.urls[self.index],self.lines[self.index]
+		
 ######################################################################################
 # Base Window Classes
 ######################################################################################
@@ -357,7 +416,6 @@ class ImagesDialog(BaseWindow):
 		xbmcgui.WindowXML.__init__( self, *args, **kwargs )
 	
 	def onInit(self):
-		self.setTheme()
 		self.getControl(200).setEnabled(len(self.images) > 1)
 		self.getControl(202).setEnabled(len(self.images) > 1)
 		self.showImage()
@@ -402,10 +460,17 @@ class ViewerWindow(BaseWindow):
 		self.url = kwargs.get('url')
 		self.imageReplace = 'IMG #%s'
 		self.page = None
+		self.history = URLHistory(self.url)
+		self.idFilter = re.compile('\[\[(.+?)\]\]',re.S)
 		BaseWindow.__init__( self, *args, **kwargs )
 		
 	def onInit(self):
 		self.refresh()
+		
+	def back(self):
+		self.url,line = self.history.goBack()
+		self.refresh()
+		self.getControl(122).selectItem(line)
 		
 	def refresh(self):
 		self.page = WR.getWebPage(self.url)
@@ -413,22 +478,70 @@ class ViewerWindow(BaseWindow):
 		self.getLinks()
 		self.displayPage()
 		
+	def nextLink(self):
+		item = self.getControl(122).getSelectedItem()
+		disp = item.getLabel()
+		disp_split = disp.split('[COLOR FF871203]',1)
+		if len(disp_split) < 2: return
+		if not '[COLOR FF015602]' in disp_split[1]: return
+		disp = disp_split[0] + '[COLOR FF015602]' + disp_split[1].replace('[COLOR FF015602]','[COLOR FF871203]',1)
+		item.setLabel(disp)
+		
+	def prevLink(self):
+		item = self.getControl(122).getSelectedItem()
+		disp = item.getLabel()
+		disp_split = disp.split('[COLOR FF871203]',1)
+		if len(disp_split) < 2: return
+		if not '[COLOR FF015602]' in disp_split[0]: return
+		disp = '[COLOR FF871203]'.join(disp_split[0].rsplit('[COLOR FF015602]',1)) +  '[COLOR FF015602]' + disp_split[1] 
+		item.setLabel(disp)
+		
+	def currentLink(self):
+		item = self.getControl(122).getSelectedItem()
+		disp = item.getLabel()
+		if not '[COLOR FF015602]' in disp: return
+		rest = disp.split('[COLOR FF871203]',1)[-1]
+		count = len(rest.split('[COLOR FF015602]'))
+		count -= 1
+		links = self.page.links()
+		if count < 0 or count >= len(links): return ''
+		links.reverse()
+		return links[count]
+	
 	def displayPage(self):
-		self.getControl(122).setText(self.page.forDisplay()) 
+		disp, title = self.page.forDisplayWithIDs()
+		#import codecs
+		#codecs.open('/home/ruuk/test.txt','w',encoding='utf-8').write(disp)
+		self.getControl(104).setLabel(title or self.url)
+		vlist = self.getControl(122)
+		vlist.reset()
+		while disp:
+			ids = ','.join(self.idFilter.findall(disp))
+			item = xbmcgui.ListItem(label='[CR]' + self.idFilter.sub('',disp).replace('[COLOR FF015602]','[COLOR FF871203]',1))
+			item.setProperty('ids',ids)
+			#re.sub('\[COLOR FF015602\]\[B\](.+?)\[/B\]\[/COLOR\]',r'[COLOR FF871203][B]\1[/B][/COLOR]',disp,1))
+			vlist.addItem(item)
+			if not '[CR]' in disp: break
+			disp = disp.split('[CR]',1)[-1]
+		if self.page.id: self.gotoID(self.page.id)
+		
 		
 	def getLinks(self):
 		ulist = self.getControl(148)
+		ulist.reset()
 		for link in self.page.links():
 			item = xbmcgui.ListItem(link.text or link.url,link.urlShow())
 			if link.isImage():
-				item.setIconImage(link.url)
+				item.setIconImage(link.fullURL())
 			else:
 				item.setIconImage('link.png')
 			ulist.addItem(item)
 
 	def getImages(self):
+		self.getControl(150).reset()
 		i=0
 		for url in self.page.imageURLs():
+			url = fullURL(self.url,url)
 			i+=1
 			item = xbmcgui.ListItem(self.imageReplace % i,iconImage=url)
 			item.setProperty('url',url)
@@ -439,22 +552,43 @@ class ViewerWindow(BaseWindow):
 		
 	def onClick( self, controlID ):
 		if BaseWindow.onClick(self, controlID): return
-		if controlID == 148:
+		if controlID == 122:
+			self.linkSelected(self.currentLink())
+		elif controlID == 148:
 			self.linkSelected()
 		elif controlID == 150:
 			self.showImage(self.getControl(150).getSelectedItem().getProperty('url'))
-	
-	def linkSelected(self):
-		idx = self.getControl(148).getSelectedPosition()
-		if idx < 0: return
-		links = self.page.links()
-		if idx >= len(links): return
-		link = links[idx]
-		
+			
+	def gotoID(self,id):
+		id = id.replace('#','')
+		vlist = self.getControl(122)
+		bottom = vlist.size()-1
+		for i in range((bottom)*-1,1):
+			i = abs(i)
+			item = vlist.getListItem(i)
+			ids = item.getProperty('ids')
+			#print id,ids
+			if id in ids:
+				vlist.selectItem(i)
+				return
+			
+	def linkSelected(self,link=None):
+		if not link:
+			idx = self.getControl(148).getSelectedPosition()
+			if idx < 0: return
+			links = self.page.links()
+			if idx >= len(links): return
+			link = links[idx]
+		if link.url.startswith('#'):
+			self.gotoID(link.url)
+			return
+		url = link.fullURL()
+		print url
+		self.history.addURL(url,old_line=self.getControl(122).getSelectedPosition())
 		if link.isImage():
-			self.showImage(link.url)
+			self.showImage(url)
 		else:
-			self.url = link.url
+			self.url = url
 			self.refresh()
 			#base = xbmcgui.Dialog().browse(3,__language__(30144),'files')
 			#if not base: return
@@ -473,8 +607,17 @@ class ViewerWindow(BaseWindow):
 		del w
 			
 	def onAction(self,action):
-		if action == ACTION_PARENT_DIR:
-			action = ACTION_PREVIOUS_MENU
+		bc = action.getButtonCode()
+		print 'Action: %s  BC: %s' % (action.getId(),bc)
+		if bc == 61472:
+			self.nextLink()
+			return
+		elif bc == 192544 or action == 61728:
+			self.prevLink()
+			return
+		elif action == ACTION_PARENT_DIR:
+			self.back()
+			return
 		#elif action == ACTION_CONTEXT_MENU:
 		#	self.doMenu()
 		BaseWindow.onAction(self,action)
@@ -567,7 +710,7 @@ class Downloader:
 WR = WebReader()
 HC = HTMLConverter()
 
-w = ViewerWindow("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME,url='http://www.google.com')
+w = ViewerWindow("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME,url='http://wiki.xbmc.org/')
 w.doModal()
 del w
 sys.modules.clear()
