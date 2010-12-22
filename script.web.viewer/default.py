@@ -54,9 +54,15 @@ class WebReader:
 	def __init__(self):
 		self.browser = mechanize.Browser()
 		self.browser.set_handle_robots(False)
+		self.browser.set_handle_redirect(True)
+		self.browser.set_handle_refresh(True, honor_time=False)
+		self.browser.set_handle_equiv(True)
+		self.browser.set_debug_redirects(True)
 		self.browser.addheaders = [('User-agent', 'Mozilla/3.0 (compatible)')]
+		#self.browser.addheaders = [('User-agent','Mozilla/5.0 (X11; Linux i686; rv:2.0.1) Gecko/20100101 Firefox/4.0.1')]
 		
 	def getWebPage(self,url,callback=None):
+		print url
 		if not callback: callback = self.fakeCallback
 		html = ''
 		id = ''
@@ -68,11 +74,45 @@ class WebReader:
 			err = ERROR('ERROR READING PAGE')
 			LOG('URL: %s' % url)
 			xbmcgui.Dialog().ok('ERROR','Error loading page.',err)
-		return WebPage(html,url,id=id)
+		url,html = self.checkRedirect(html,url,callback)
+		if not callback(80,'Processing Data'): return None
+		return WebPage(html,url,id=id,forms=self.browser.forms())
+	
+	def checkRedirect(self,html,url=None,callback=None):
+		if not callback: callback = self.fakeCallback
+		match = re.search('<meta[^>]+?http-equiv="Refresh"[^>]*?URL=(?P<url>[^>"]+?)"[^>]*?/>',html)
+		#print html
+		if match:
+			LOG('REDIRECTING TO %s' % match.group('url'))
+			if not callback(3,'Redirecting'): return None
+			try:
+				url = match.group('url')
+				html = self.readURL(url, callback)
+			except:
+				#err = 
+				ERROR('ERROR READING PAGE REDIRECT')
+				LOG('URL: %s' % url)
+				return url,html
+				#xbmcgui.Dialog().ok('ERROR','Error loading page.',err)
+		return url,html
 	
 	def readURL(self,url,callback):
+		if not callback(5,'Opening Page'): return ''
 		response = self.browser.open(url)
+		if not callback(30,'Reading Data'): return ''
 		return response.read()
+		
+	def submitForm(self,form,submit_control):
+		self.browser.form = form
+		ct = 0
+		for c in form.controls:
+			if c.type == 'submit':
+				if c == submit_control: break
+				ct += 1 
+		res = self.browser.submit(nr=ct)
+		html = res.read()
+		url,html = self.checkRedirect(html) #@UnusedVariable
+		return WebPage(html,self.browser.geturl(),forms=self.browser.forms())
 		
 	def getForm(self,html,action,name=None):
 		if not action: return None
@@ -146,11 +186,18 @@ class WebReader:
 # Web Page
 ################################################################################
 class WebPage:
-	def __init__(self,html,url,id=''):
+	def __init__(self,html,url,id='',forms=[]):
 		self.url = url
 		self.html = html
 		self.id = id
+		self.forms = []
+		self._labels = None
+		self._headers = None
+		for f in forms: self.forms.append(f)
 		
+	def isDisplayable(self):
+		return bool(self.html)
+	
 	def forDisplay(self):
 		return HC.htmlToDisplay(self.html)
 	
@@ -170,12 +217,44 @@ class WebPage:
 		return re.findall('<a.+?href="(http://.+?\.(?:jpg|png|gif|bmp))".+?</a>',self.html,re.S)
 		
 	def linkURLs(self):
-		return HC.linkFilter.finditer(self.html,re.S)
+		html = unicode(self.html,'utf8','replace')
+		return HC.linkFilter.finditer(HC.cleanHTML(html))
 		
 	def links(self):
 		links = []
 		for m in self.linkURLs(): links.append(Link(m,self.url))
 		return links
+	
+	def labels(self):
+		if self._labels: return self._labels, self._headers
+		self._labels = {}
+		self._headers = {}
+		for m in HC.labelFilter.finditer(self.html,re.S):
+			self._labels[m.group('inputid')] = HC.convertHTMLCodes(HC.tagFilter.sub('',m.group('label')))
+		for m in HC.altLabelFilter.finditer(HC.lineFilter.sub('',self.html)):
+			if not m.group('inputid') in self._labels:
+				self._labels[m.group('inputid')] = HC.convertHTMLCodes(m.group('label'))
+				header = m.group('header')
+				if header: header = header.strip()
+				if header: self._headers[m.group('inputid')] = HC.convertHTMLCodes(header)
+		for k in self._labels.keys():
+			if self._labels[k].endswith(':'):
+				self._labels[k] = self._labels[k][:-1]
+		return self._labels, self._headers
+	
+	def getForm(self,name=None,action=None,index=None):
+		if name:
+			for f in self.forms:
+				if name == f.name: return f
+		if action:
+			for f in self.forms:
+				if action in f.action: return f
+		if index:
+			ct = 0
+			for f in self.forms:
+				if ct == index: return f
+		return None
+		
 
 class Link:
 	def __init__(self,match=None,url=''):
@@ -188,7 +267,7 @@ class Link:
 			self.url = match.group('url')
 			text = match.group('text') 
 			text = HC.tagFilter.sub('',text).strip()
-			self.text = HC.convertHTMLCodes(unicode(text,'utf8'))
+			self.text = HC.convertHTMLCodes(text)
 		self.processURL()
 			
 	def processURL(self):
@@ -209,6 +288,7 @@ class Link:
 def fullURL(baseUrl,url):
 		if not url.startswith('http://'):
 			base = baseUrl.split('://',1)[-1]
+			base = base.rsplit('/',1)[0]
 			domain = base.split('/',1)[0]
 			if url.startswith('/'):
 				if url.startswith('//'):
@@ -394,6 +474,7 @@ class BaseWindow(xbmcgui.WindowXMLDialog,ThreadWindow):
 	
 	def startProgress(self):
 		self._progMessageSave = self.getControl(104).getLabel()
+		self.getControl(310).setWidth(1)
 		self.getControl(310).setVisible(True)
 	
 	def setProgress(self,pct,message=''):
@@ -406,6 +487,191 @@ class BaseWindow(xbmcgui.WindowXMLDialog,ThreadWindow):
 		self.getControl(310).setVisible(False)
 		self.getControl(104).setLabel(self._progMessageSave)
 
+class FormDialog(xbmcgui.WindowXMLDialog):
+	def __init__( self, *args, **kwargs ):
+		self.form = kwargs.get('form')
+		self.labels = kwargs.get('labels')
+		self.headers = kwargs.get('headers')
+		self.submit = None
+		xbmcgui.WindowXMLDialog.__init__( self, *args, **kwargs )
+	
+	def onInit(self):
+		self.controlList = self.getControl(120)
+		self.createForm()
+	
+	def addLabel(self,text):
+		item = xbmcgui.ListItem(label=text)
+		item.setInfo('video',{'Genre':'label'})
+		self.controlList.addItem(item)
+		
+	def createForm(self):
+		form = self.form
+		labels = self.labels
+		idx = 0
+		trail = False
+		notrail = True
+		for c in form.controls:
+			if c.type != 'hidden':
+				label = labels.get(c.id) or labels.get(c.name) or c.name or c.type.title()
+				header = self.headers.get(c.id) or self.headers.get(c.name)
+				if header and not c.type == 'submit': self.addLabel(header)
+				if trail and notrail:
+					notrail = False
+				elif trail:
+					trail = False
+				notrail = True
+				if c.type == 'checkbox' or c.type == 'radio':
+					multiple = len(c.items) > 1
+					if multiple and not trail and not header: self.controlList.addItem(xbmcgui.ListItem())
+					cidx = 0
+					for i in c.items:
+						if multiple:
+							label = i.name or labels.get(i.id) or labels.get(i.name) or i.id
+						else:
+							label = labels.get(i.id) or labels.get(i.name) or i.id
+						value = i.selected
+						item = xbmcgui.ListItem(label=label)
+						item.setInfo('video',{'Genre':'checkbox'})
+						item.setInfo('video',{'Director':value and 'checked' or 'unchecked'})
+						item.setProperty('index',str(idx))
+						item.setProperty('cindex',str(cidx))
+						self.controlList.addItem(item)
+						cidx += 1
+					if len(c.items) > 1:
+						trail = True
+						self.controlList.addItem(xbmcgui.ListItem())
+				elif c.type == 'submit' or c.type == 'image':
+					a = c.attrs
+					#value = a.get('title','')
+					item = xbmcgui.ListItem(label=a.get('alt') or c.value or label)
+					item.setInfo('video',{'Genre':'submit'})
+					item.setProperty('index',str(idx))
+					self.controlList.addItem(item)
+				elif c.type == 'text' or c.type == 'password' or c.type == 'textarea':
+					a = c.attrs
+					label = labels.get(c.id) or labels.get(c.name) or a.get('title') or a.get('value') or a.get('type')
+					if c.type == 'password':
+						value = '*' * len(c.value or '')
+					else:
+						value = c.value or ''
+					#label = label + ': ' + value
+					item = xbmcgui.ListItem(label=label,label2=value)
+					item.setInfo('video',{'Genre':'text'})
+					item.setProperty('index',str(idx))
+					self.controlList.addItem(item)
+				elif c.type == 'select':
+					pre = labels.get(c.id,labels.get(c.name,''))
+					if pre: self.addLabel(pre)
+					if c.value:
+						value = c.value[0]
+						citem = c.get(value)
+						label = citem.attrs.get('label',value)
+					else:
+						label = 'Multi-Select'
+					item = xbmcgui.ListItem(label=label)
+					item.setInfo('video',{'Genre':'select'})
+					item.setProperty('index',str(idx))
+					self.controlList.addItem(item)
+				elif c.type == 'file':
+					if label: self.addLabel(label)
+					label = ''
+					if c._upload_data:
+						try:
+							label = c._upload_data[0][0].name
+						except:
+							ERROR('Error setting file control label')
+							pass
+					item = xbmcgui.ListItem(label=label)
+					item.setInfo('video',{'Genre':'file'})
+					item.setProperty('index',str(idx))
+					self.controlList.addItem(item)
+			idx+=1
+					
+	def onFocus( self, controlId ):
+		self.controlId = controlId
+	
+	def onClick( self, controlID ):
+		if controlID == 120:
+			self.doControl()
+			
+	def getFormControl(self,item):
+		idx = item.getProperty('index')
+		if not idx.isdigit():
+			print 'error',idx
+			return None
+		idx = int(idx)
+		return self.form.controls[idx]
+			
+	def doControl(self):
+		item = self.controlList.getSelectedItem()
+		control = self.getFormControl(item)
+		if not control: return
+		ctype = control.type
+		if ctype == 'text' or ctype == 'password' or ctype == 'textarea':
+			text = doKeyboard(item.getLabel(),item.getLabel2(),hidden=bool(ctype == 'password'))
+			if text == None: return
+			control.value = text
+			if ctype == 'password':
+				text = '*' * len(text)
+			item.setLabel2(text)
+		elif ctype == 'checkbox' or ctype == 'radio':
+			cidx = int(item.getProperty('cindex'))
+			value = control.items[cidx].selected
+			value = not value
+			control.items[cidx].selected = value
+			if type == 'checkbox':
+				item.setInfo('video',{'Director':value and 'checked' or 'unchecked'})
+			else:
+				pos = self.controlList.getSelectedPosition() - cidx
+				for i,ci in zip(range(0,len(control.items)),control.items):
+					value = ci.selected
+					it = self.controlList.getListItem(pos + i)
+					it.setInfo('video',{'Director':value and 'checked' or 'unchecked'})
+		elif ctype == 'select':
+			if control.multiple:
+				while self.doSelect(control,item): pass
+			else:
+				self.doSelect(control,item)
+		elif ctype == 'submit' or ctype == 'image':
+			self.submit = control
+			self.close()
+		elif ctype == 'file':
+			fname = xbmcgui.Dialog().browse(1,'Select File','files')
+			control.add_file(open(fname,'r'),filename=os.path.basename(fname))
+			item.setLabel(fname)
+			
+	
+	def doSelect(self,control,item):
+		options = []
+		for i in control.items:
+			cb = i.selected and unichr(0x2611) or unichr(0x2610)
+			options.append(cb + ' ' + (i.attrs.get('label',i.name) or i.name))
+			#options.append(i.attrs.get('label',i.name) or i.name)
+		dialog = xbmcgui.Dialog()
+		idx = dialog.select('Select',options)
+		if idx < 0: return False
+		i = control.items[idx]
+		i.selected = not i.selected
+		if control.multiple:
+			ct = 0
+			for i in control.items:
+				if i.selected: ct += 1
+			if ct:
+				label = '%s Selected' % ct
+			else:
+				label = 'Multi-Select'
+		else:
+			value = control.value[0]
+			citem = control.get(value)
+			label = citem.attrs.get('label',value)
+		item.setLabel(label)
+		return True
+			
+	def onAction(self,action):
+		if action == ACTION_PARENT_DIR:
+			action = ACTION_PREVIOUS_MENU
+		xbmcgui.WindowXMLDialog.onAction(self,action)
+		
 ######################################################################################
 # Image Dialog
 ######################################################################################
@@ -461,68 +727,153 @@ class ViewerWindow(BaseWindow):
 		self.imageReplace = 'IMG #%s'
 		self.page = None
 		self.history = URLHistory(self.url)
-		self.idFilter = re.compile('\[\[(.+?)\]\]',re.S)
+		self.idFilter = re.compile('\[\{(.+?)\}\]',re.S)
+		self.linkCTag = '[COLOR %s]' % HC.linkColor
+		self.formCTag = '[COLOR %s]' % HC.formColorB
+		self.selectedCTag = '[COLOR %s]' % 'FF871203'
+		self.selected = None
+		self.lastPos = 0
+		self.saveDisp = ''
 		BaseWindow.__init__( self, *args, **kwargs )
 		
 	def onInit(self):
+		self.pageList = self.getControl(122)
+		self.setProgressCommands(self.startProgress,self.setProgress,self.endProgress)
 		self.refresh()
+		
+	def endProgress(self):
+		self.getControl(310).setVisible(False)
 		
 	def back(self):
 		self.url,line = self.history.goBack()
 		self.refresh()
-		self.getControl(122).selectItem(line)
+		self.pageList.selectItem(line)
+		
+	def gotoURL(self,url=None):
+		if not url:
+			url = doKeyboard('Enter URL')
+			if not url: return
+			if not url.startswith('http://'): url = 'http://' + url
+		self.history.addURL(url,old_line=self.pageList.getSelectedPosition())
+		self.url = url
+		self.refresh()
 		
 	def refresh(self):
-		self.page = WR.getWebPage(self.url)
+		t = self.getThread(self.getRefreshData,finishedCallback=self.refreshDo)
+		t.setArgs(callback=t.progressCallback,donecallback=t.finishedCallback)
+		t.start()
+		
+	def getRefreshData(self,callback=None,donecallback=None):
+		page = WR.getWebPage(self.url,callback=callback)
+		if not page or not page.isDisplayable():
+			callback(100,'Done')
+		donecallback(page)
+		
+	def refreshDo(self,page):
+		if not page or not page.isDisplayable():
+			return
+		self.selected = None
+		self.lastPos = 0
+		self.saveDisp = ''
+		self.page = page
 		self.getImages()
 		self.getLinks()
-		self.displayPage()
+		self.displayPage() 
+		#self.endProgress()
+		
+	def selectedType(self,prefix,item):
+		if not self.linkCTag in prefix and not self.formCTag in prefix:
+			self.selected = item.getProperty('selected')
+		return self.selected
 		
 	def nextLink(self):
-		item = self.getControl(122).getSelectedItem()
+		item = self.pageList.getSelectedItem()
 		disp = item.getLabel()
-		disp_split = disp.split('[COLOR FF871203]',1)
+		disp_split = disp.split(self.selectedCTag,1)
 		if len(disp_split) < 2: return
-		if not '[COLOR FF015602]' in disp_split[1]: return
-		disp = disp_split[0] + '[COLOR FF015602]' + disp_split[1].replace('[COLOR FF015602]','[COLOR FF871203]',1)
+		if not self.linkCTag in disp_split[1] and not self.formCTag in disp_split[1]: return
+		fi = (disp_split[1].find(self.formCTag) + 1) or 999999
+		li = (disp_split[1].find(self.linkCTag) + 1) or 999999
+		oldtag = self.linkCTag
+		if self.selectedType(disp_split[0],item) == 'FORM': oldtag = self.formCTag
+		if fi < li:
+			self.selected = 'FORM'
+			disp = disp_split[0] + oldtag + disp_split[1].replace(self.formCTag,self.selectedCTag,1)
+		else:
+			self.selected = 'LINK'
+			disp = disp_split[0] + oldtag + disp_split[1].replace(self.linkCTag,self.selectedCTag,1)
+			
 		item.setLabel(disp)
 		
 	def prevLink(self):
-		item = self.getControl(122).getSelectedItem()
+		item = self.pageList.getSelectedItem()
 		disp = item.getLabel()
-		disp_split = disp.split('[COLOR FF871203]',1)
+		disp_split = disp.split(self.selectedCTag,1)
 		if len(disp_split) < 2: return
-		if not '[COLOR FF015602]' in disp_split[0]: return
-		disp = '[COLOR FF871203]'.join(disp_split[0].rsplit('[COLOR FF015602]',1)) +  '[COLOR FF015602]' + disp_split[1] 
+		if not self.linkCTag in disp_split[0] and not self.formCTag in disp_split[0]: return
+		fi = disp_split[0].rfind(self.formCTag)
+		li = disp_split[0].rfind(self.linkCTag)
+		oldtag = self.linkCTag
+		if self.selectedType(disp_split[0],item) == 'FORM': oldtag = self.formCTag
+		if fi > li:
+			self.selected = 'FORM'
+			disp = self.selectedCTag.join(disp_split[0].rsplit(self.formCTag,1)) +  oldtag + disp_split[1]
+		else:
+			self.selected = 'LINK'
+			disp = self.selectedCTag.join(disp_split[0].rsplit(self.linkCTag,1)) +  oldtag + disp_split[1] 
 		item.setLabel(disp)
 		
 	def currentLink(self):
-		item = self.getControl(122).getSelectedItem()
+		item = self.pageList.getSelectedItem()
 		disp = item.getLabel()
-		if not '[COLOR FF015602]' in disp: return
-		rest = disp.split('[COLOR FF871203]',1)[-1]
-		count = len(rest.split('[COLOR FF015602]'))
-		count -= 1
-		links = self.page.links()
-		if count < 0 or count >= len(links): return ''
-		links.reverse()
-		return links[count]
-	
+		tag = self.linkCTag 
+		if not self.selectedCTag in disp: return
+		prefix,rest = disp.split(self.selectedCTag,1)
+		if self.selectedType(prefix,item) == 'FORM': tag = self.formCTag
+		count = len(rest.split(tag))
+		#ignore, count = re.subn(re.escape(tag),'',rest) #@UnusedVariable
+		#count += 1
+		if self.selected == 'FORM':
+			items = self.page.forms
+		else:
+			items = self.page.links()
+		idx = len(items) - count
+		print '%s %s %s' % (idx,count,len(items))
+		if count < 0 or count > len(items): return None
+		return items[idx]
+		
 	def displayPage(self):
 		disp, title = self.page.forDisplayWithIDs()
-		#import codecs
-		#codecs.open('/home/ruuk/test.txt','w',encoding='utf-8').write(disp)
-		self.getControl(104).setLabel(title or self.url)
-		vlist = self.getControl(122)
-		vlist.reset()
-		while disp:
-			ids = ','.join(self.idFilter.findall(disp))
-			item = xbmcgui.ListItem(label='[CR]' + self.idFilter.sub('',disp).replace('[COLOR FF015602]','[COLOR FF871203]',1))
-			item.setProperty('ids',ids)
-			#re.sub('\[COLOR FF015602\]\[B\](.+?)\[/B\]\[/COLOR\]',r'[COLOR FF871203][B]\1[/B][/COLOR]',disp,1))
-			vlist.addItem(item)
-			if not '[CR]' in disp: break
-			disp = disp.split('[CR]',1)[-1]
+		xbmcgui.lock()
+		try:
+			#import codecs
+			#codecs.open('/home/ruuk/test.txt','w',encoding='utf-8').write(disp)
+			self.getControl(104).setLabel(title or self.url)
+			plist = self.pageList
+			plist.reset()
+			first = True
+			while disp:
+				ids = ','.join(self.idFilter.findall(disp))
+				fi = (disp.find(self.formCTag) + 1) or 999999
+				li = (disp.find(self.linkCTag) + 1) or 999999
+				if fi < li:
+					selected = 'FORM'
+					label = '[CR]' + self.idFilter.sub('',disp).replace(self.formCTag,self.selectedCTag,1)
+				else:
+					selected = 'LINK'
+					label = '[CR]' + self.idFilter.sub('',disp).replace(self.linkCTag,self.selectedCTag,1) 
+				if first:
+					self.saveDisp = label
+					first = False
+				item = xbmcgui.ListItem(label=label)
+				item.setProperty('selected',selected)
+				item.setProperty('ids',ids)
+				#re.sub('\[COLOR FF015602\]\[B\](.+?)\[/B\]\[/COLOR\]',r'[COLOR FF871203][B]\1[/B][/COLOR]',disp,1))
+				plist.addItem(item)
+				if not '[CR]' in disp: break
+				disp = disp.split('[CR]',1)[-1]
+		finally:
+			xbmcgui.unlock()
 		if self.page.id: self.gotoID(self.page.id)
 		
 		
@@ -553,7 +904,11 @@ class ViewerWindow(BaseWindow):
 	def onClick( self, controlID ):
 		if BaseWindow.onClick(self, controlID): return
 		if controlID == 122:
-			self.linkSelected(self.currentLink())
+			self.itemSelected()
+		elif controlID == 105:
+			self.refresh()
+		elif controlID == 200:
+			self.back()
 		elif controlID == 148:
 			self.linkSelected()
 		elif controlID == 150:
@@ -561,17 +916,27 @@ class ViewerWindow(BaseWindow):
 			
 	def gotoID(self,id):
 		id = id.replace('#','')
-		vlist = self.getControl(122)
-		bottom = vlist.size()-1
+		plist = self.pageList
+		bottom = plist.size()-1
 		for i in range((bottom)*-1,1):
 			i = abs(i)
-			item = vlist.getListItem(i)
+			item = plist.getListItem(i)
 			ids = item.getProperty('ids')
 			#print id,ids
 			if id in ids:
-				vlist.selectItem(i)
+				plist.selectItem(i)
 				return
 			
+	def itemSelected(self):
+		item = self.currentLink()
+		if not item:
+			LOG('itemSelected() - No Link')
+			return
+		if isinstance(item,Link):
+			self.linkSelected(item)
+		else:
+			self.doForm(form=item)
+		
 	def linkSelected(self,link=None):
 		if not link:
 			idx = self.getControl(148).getSelectedPosition()
@@ -583,13 +948,10 @@ class ViewerWindow(BaseWindow):
 			self.gotoID(link.url)
 			return
 		url = link.fullURL()
-		print url
-		self.history.addURL(url,old_line=self.getControl(122).getSelectedPosition())
 		if link.isImage():
 			self.showImage(url)
 		else:
-			self.url = url
-			self.refresh()
+			self.gotoURL(url)
 			#base = xbmcgui.Dialog().browse(3,__language__(30144),'files')
 			#if not base: return
 			#fname,ftype = Downloader(message=__language__(30145)).downloadURL(base,link.url)
@@ -606,9 +968,22 @@ class ViewerWindow(BaseWindow):
 		w.doModal()
 		del w
 			
+	def selectionChanged(self,pos,last_pos):
+		#print last_pos
+		if self.saveDisp and self.lastPos > -1: self.pageList.getListItem(last_pos).setLabel(self.saveDisp)
+		if pos > -1:
+			item = self.pageList.getListItem(pos)
+			self.selected = item.getProperty('selected')
+			self.saveDisp = item.getLabel()
+	
 	def onAction(self,action):
 		bc = action.getButtonCode()
-		print 'Action: %s  BC: %s' % (action.getId(),bc)
+		#print 'Action: %s  BC: %s' % (action.getId(),bc)
+		if self.getFocusId() == 122:
+			pos = self.pageList.getSelectedPosition()
+			if pos != self.lastPos:
+				self.selectionChanged(pos,self.lastPos)
+				self.lastPos = pos
 		if bc == 61472:
 			self.nextLink()
 			return
@@ -618,9 +993,50 @@ class ViewerWindow(BaseWindow):
 		elif action == ACTION_PARENT_DIR:
 			self.back()
 			return
-		#elif action == ACTION_CONTEXT_MENU:
-		#	self.doMenu()
+		elif action == ACTION_CONTEXT_MENU:
+			self.doMenu()
 		BaseWindow.onAction(self,action)
+		
+	def doMenu(self):
+		dialog = xbmcgui.Dialog()
+		idx = dialog.select('Options',['Forms','Go To URL'])
+		if idx == 0: self.doForms()
+		elif idx == 1: self.gotoURL()
+		
+	def doForms(self):
+		options = []
+		ct = 1
+		for f in self.page.forms:
+			options.append('Form #%s: %s' % (ct,f.name or f.attrs.get('id')))
+			ct += 1
+		dialog = xbmcgui.Dialog()
+		idx = dialog.select('Forms',options)
+		if idx < 0: return
+		self.doForm(idx)
+		
+	def doForm(self,idx=0,form=None):
+		if not form:
+			ct=0
+			for form in self.page.forms:
+				if ct == idx: break
+				ct += 1
+			else:
+				return
+		
+		labels, headers = self.page.labels()
+		w = FormDialog("script-webviewer-form.xml" ,__addon__.getAddonInfo('path'),THEME,form=form,labels=labels,headers=headers)
+		w.doModal()
+		if not w.submit: return
+		page = WR.submitForm(w.form,w.submit)
+		self.refreshDo(page)
+		del w
+				
+def doKeyboard(prompt,default='',hidden=False):
+	keyboard = xbmc.Keyboard(default,prompt)
+	keyboard.setHiddenInput(hidden)
+	keyboard.doModal()
+	if not keyboard.isConfirmed(): return None
+	return keyboard.getText()
 		
 class Downloader:
 	def __init__(self,header=__language__(30205),message=''):
@@ -706,12 +1122,25 @@ class Downloader:
 		outfile.close()
 		urlObj.close()
 		return (target,ftype)
-		
+	
+def getWebResult(self,url):
+	w = ViewerWindow("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME,url=url)
+	w.doModal()
+	url = w.page.url
+	html = w.page.html
+	del w
+	return url,html
+	
 WR = WebReader()
 HC = HTMLConverter()
 
-w = ViewerWindow("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME,url='http://wiki.xbmc.org/')
-w.doModal()
-del w
-sys.modules.clear()
+if __name__ == '__main__':
+	#start_url = 'http://examples.codecharge.com/ExamplePack/MultiSelectSearch/MultiSelectSearch.php'
+	#start_url = 'http://www.tizag.com/phpT/examples/formex.php'
+	#start_url = 'http://wiki.xbmc.org'
+	start_url='http://www.cs.tut.fi/~jkorpela/forms/file.html'
+	w = ViewerWindow("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME,url=start_url)
+	w.doModal()
+	del w
+	sys.modules.clear()
 	

@@ -11,6 +11,8 @@
              library="default.py">
     <provides>executable</provides>
   </extension>
+  <extension point="xbmc.python.module"
+             library="default.py" />
   <extension point="xbmc.addon.metadata">
     <platform>all</platform>
     <summary lang="en">Simple web page browser</summary>

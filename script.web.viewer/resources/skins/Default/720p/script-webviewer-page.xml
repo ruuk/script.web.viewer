@@ -29,50 +29,103 @@
             <texture border="10">title-background.png</texture>
       </control>
       <control type="image" id="102">
-            <description>Avatar</description>
-            <posx>19</posx>
+            <description>Icon</description>
+            <posx>29</posx>
             <posy>15</posy>
-            <width>59</width>
-            <height>59</height>
+            <width>60</width>
+            <height>60</height>
+            <texture>corner-icon.png</texture>
       </control>
-      <control type="label" id="103">
-        <description>textarea</description>
-        <posx>82</posx>
-        <posy>22</posy>
-        <width>100</width>
-        <height>40</height>
-        <font>font18</font>
-        <textcolor>black</textcolor>
-        <aligny>center</aligny>
-        <align>center</align>
-        <label>[B]Post[/B]</label>
-        <wrapmultiline>true</wrapmultiline>
-      </control>
-
-      
       <control type="label" id="104">
         <description>Topic</description>
-        <posx>192</posx>
+        <posx>92</posx>
         <posy>14</posy>
-        <width>735</width>
+        <width>783</width>
         <height>60</height>
-        <font>font18</font>
+        <font>font12</font>
         <textcolor>black</textcolor>
         <aligny>center</aligny>
         <align>center</align>
         <wrapmultiline>true</wrapmultiline>
       </control>
       
-      <control type="label" id="105">
-        <description>Date</description>
-        <posx>937</posx>
-        <posy>14</posy>
-        <width>300</width>
-        <height>60</height>
-        <font>font18</font>
-        <textcolor>black</textcolor>
+      <control type="button" id="200">
+       <description>The Button</description>
+       <onleft>202</onleft>
+       <onright>105</onright>
+       <onup>122</onup>
+       <ondown>122</ondown>
+       <posx>885</posx>
+       <posy>31</posy>
+       <width>50</width>
+       <height>27</height>
+       <visible>true</visible>
+       <colordiffuse>FFFFFFFF</colordiffuse>
+       <font>font12</font>
+       <align>right</align>
+       <textcolor>FF000000</textcolor>
+       <disabledcolor>20555555</disabledcolor>
+       <textoffsetx>33</textoffsetx>
+       <texturefocus>left-focus.png</texturefocus>
+       <texturenofocus>left-nofocus.png</texturenofocus>
+      </control>
+      <control type="button" id="105">
+        <description>Page Button</description>
+        <posx>940</posx>
+        <posy>29</posy>
+        <width>230</width>
+        <height>30</height>
+        <onleft>200</onleft>
+        <onright>106</onright>
+        <onup>122</onup>
+        <ondown>122</ondown>
+        <font>font12</font>
+        <textcolor>FF000000</textcolor>
         <aligny>center</aligny>
         <align>center</align>
+        <texturefocus border="10">FBbutton-focus.png</texturefocus>
+        <texturenofocus border="10">FBbutton-nofocus.png</texturenofocus>
+        <label>Refresh</label>
+      </control>
+      <control type="button" id="106">
+        <description>Stop Button</description>
+        <posx>1025</posx>
+        <posy>29</posy>
+        <width>60</width>
+        <height>30</height>
+        <onleft>105</onleft>
+        <onright>202</onright>
+        <onup>122</onup>
+        <ondown>122</ondown>
+        <font>font12</font>
+        <textcolor>FF000000</textcolor>
+        <aligny>center</aligny>
+        <align>center</align>
+        <label>$LOCALIZE[SCRIPT3010]</label>
+        <colordiffuse>FFFF0000</colordiffuse>
+        <texturefocus border="10">FBbutton-focus.png</texturefocus>
+        <texturenofocus border="10">FBbutton-nofocus.png</texturenofocus>
+        <visible>!Control.IsVisible(105)</visible>
+      </control>
+      <control type="button" id="202">
+       <description>The Button</description>
+       <onleft>106</onleft>
+       <onright>200</onright>
+       <onup>122</onup>
+       <ondown>122</ondown>
+       <posx>1174</posx>
+       <posy>31</posy>
+       <width>50</width>
+       <height>27</height>
+       <visible>true</visible>
+       <colordiffuse>FFFFFFFF</colordiffuse>
+       <font>font12</font>
+       <align>left</align>
+       <textcolor>FF000000</textcolor>
+       <disabledcolor>20555555</disabledcolor>
+       <textoffsetx>4</textoffsetx>
+       <texturefocus>right-focus.png</texturefocus>
+       <texturenofocus>right-nofocus.png</texturenofocus>
       </control>
       <control type="image">
             <description>page header tab icon</description>
@@ -92,20 +145,6 @@
             <texture border="10">text-background.png</texture>
             <visible>true</visible>
       </control>
-      
-      <!--<control type="textbox" id="122">
-        <posx>30</posx>
-        <posy>100</posy>
-        <width>1205</width>
-        <height>606</height>
-        <pagecontrol>123</pagecontrol>
-        <description>My first text box control</description>
-        <colordiffuse>FFFFFFFF</colordiffuse>
-        <font>font18</font>
-        <scroll>true</scroll>
-        <textcolor>FF000000</textcolor>
-        <visible>true</visible>
-      </control>-->
       <control type="list" id="122">
         <posx>30</posx>
         <posy>100</posy>
@@ -179,27 +218,6 @@
             <texture>text-overlay.png</texture>
             <visible>false</visible>
       </control>
-      
-      <!--<control type="scrollbar" id="123">
-         <description>Message Scrollbar</description>
-         <posx>1258</posx>
-         <posy>90</posy>
-         <width>12</width>
-         <height>626</height>
-         <onleft>147</onleft>
-         <onright>149</onright>
-         <onup>123</onup>
-         <ondown>123</ondown>
-         <texturesliderbackground border="6">default-scroll_back.png</texturesliderbackground>
-         <texturesliderbar border="6">default-scroll_dark.png</texturesliderbar>
-         <texturesliderbarfocus border="6">default-scroll_mid.png</texturesliderbarfocus>
-         <textureslidernib>-</textureslidernib>
-         <textureslidernibfocus>-</textureslidernibfocus>
-         <orientation>vertical</orientation>
-         <showonepage>true</showonepage>
-         <visible>Control.IsVisible(122)</visible>
-      </control>-->
-      
       <control type="image" id="300">
         <posx>10</posx>
         <posy>86</posy>
