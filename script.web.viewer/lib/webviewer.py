@@ -1123,7 +1123,7 @@ class Downloader:
 		urlObj.close()
 		return (target,ftype)
 	
-def getWebResult(self,url):
+def getWebResult(url):
 	w = ViewerWindow("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME,url=url)
 	w.doModal()
 	url = w.page.url

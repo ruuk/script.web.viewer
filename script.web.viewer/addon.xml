@@ -8,11 +8,11 @@
     <import addon="script.module.beautifulsoup" version="3.0.8.1"/>
   </requires>
   <extension point="xbmc.python.script"
-             library="default.py">
+             library="lib/webviewer.py">
     <provides>executable</provides>
   </extension>
   <extension point="xbmc.python.module"
-             library="default.py" />
+             library="lib" />
   <extension point="xbmc.addon.metadata">
     <platform>all</platform>
     <summary lang="en">Simple web page browser</summary>
