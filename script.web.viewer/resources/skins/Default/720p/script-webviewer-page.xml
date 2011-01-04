@@ -210,7 +210,7 @@
 				<description>page header tab icon</description>
 				<posx>10</posx>
 				<posy>90</posy>
-				<width>1245</width>
+				<width>1260</width>
 				<height>626</height>
 				<texture border="10">text-background.png</texture>
 				<visible>true</visible>

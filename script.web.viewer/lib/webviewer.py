@@ -111,7 +111,7 @@ class WebReader:
 		response = self.browser.open(url)
 		content = response.info().get('content-type','')
 		contentDisp = response.info().get('content-disposition','')
-		print response.info()
+		#print response.info()
 		if not content.startswith('text'): return ResponseData(response.geturl(),content,content_disp=contentDisp) 
 		if not callback(30,__language__(30104)): return None
 		return ResponseData(response.geturl(),content,response.read())
@@ -208,7 +208,6 @@ class WebReader:
 class WebPage:
 	def __init__(self,resData,id='',forms=[]):
 		self.url = resData.url
-		print 'Test: %s' % self.url
 		self.html = resData.data
 		self.content = resData.content
 		self.contentDisp = resData.contentDisp
@@ -672,7 +671,7 @@ class ThreadWindow:
 			self._currentThread = None
 			if self._endCommand: self._endCommand()
 		
-class BaseWindow(xbmcgui.WindowXMLDialog,ThreadWindow):
+class BaseWindow(ThreadWindow):
 	def __init__( self, *args, **kwargs ):
 		self._progMessageSave = ''
 		ThreadWindow.__init__(self)
@@ -705,7 +704,7 @@ class BaseWindow(xbmcgui.WindowXMLDialog,ThreadWindow):
 ######################################################################################
 # Image Dialog
 ######################################################################################
-class ImageDialog(BaseWindow):
+class ImageDialog(BaseWindow,xbmcgui.WindowXMLDialog):
 	def __init__( self, *args, **kwargs ):
 		self.image = kwargs.get('image')
 		xbmcgui.WindowXML.__init__( self, *args, **kwargs )
@@ -804,9 +803,12 @@ class LineView:
 # Viewer Window
 ######################################################################################
 class ViewerWindow(BaseWindow):
+	IS_DIALOG = False
 	def __init__( self, *args, **kwargs):
 		self.url = kwargs.get('url')
 		self.autoForms = kwargs.get('autoForms',[])
+		
+		self.first = True
 		
 		self.imageReplace = 'IMG #%s'
 		self.page = None
@@ -830,6 +832,8 @@ class ViewerWindow(BaseWindow):
 		BaseWindow.__init__( self, *args, **kwargs )
 		
 	def onInit(self):
+		if not self.first: return
+		self.first = False
 		#self.pageList = self.getControl(122)
 		self.pageList = LineView(self.getControl(123),self.getControl(124))
 		self.controlList = self.getControl(120)
@@ -1341,10 +1345,12 @@ class ViewerWindow(BaseWindow):
 		clearDirFiles(base)
 		image_files = Downloader().downloadURLs(base,[url],'.jpg',opener=WR.browser.open_novisit)
 		if not image_files: return
-		#xbmc.executebuiltin('SlideShow(%s)' % base)  
-		w = ImageDialog("script-webviewer-imageviewer.xml" ,__addon__.getAddonInfo('path'),THEME,image=image_files[0],parent=self)
-		w.doModal()
-		del w
+		if self.IS_DIALOG:
+			w = ImageDialog("script-webviewer-imageviewer.xml" ,__addon__.getAddonInfo('path'),THEME,image=image_files[0],parent=self)
+			w.doModal()
+			del w
+		else:
+			xbmc.executebuiltin('SlideShow(%s)' % base)
 	
 	def selectLinkByIndex(self,idx):
 		element = self.page.getElementByTypeIndex(PE_LINK,idx)
@@ -1556,6 +1562,9 @@ class ViewerWindow(BaseWindow):
 #		if idx < 0: return
 #		self.doForm(idx)
 
+class ViewerWindowDialog(ViewerWindow,xbmcgui.WindowXMLDialog): IS_DIALOG = True
+class ViewerWindowNormal(ViewerWindow,xbmcgui.WindowXML): pass
+
 class BookmarksManager:
 	def __init__(self,file=''):
 		self.file = file
@@ -1695,8 +1704,11 @@ def doKeyboard(prompt,default='',hidden=False):
 	if not keyboard.isConfirmed(): return None
 	return keyboard.getText()
 
-def getWebResult(url,autoForms=[]):
-	w = ViewerWindow("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME,url=url,autoForms=autoForms)
+def getWebResult(url,autoForms=[],dialog=False):
+	if dialog:
+		w = ViewerWindowDialog("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME,url=url,autoForms=autoForms)
+	else:
+		w = ViewerWindowNormal("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME,url=url,autoForms=autoForms)
 	w.doModal()
 	url = w.page.url
 	html = w.page.html
@@ -1717,9 +1729,8 @@ if __name__ == '__main__':
 	#start_url = 'http://www.tizag.com/phpT/examples/formex.php'
 	#start_url = 'http://forum.xbmc.org'
 	#start_url='http://www.cs.tut.fi/~jkorpela/forms/file.html'
-	print getHome()
 	start_url = getHome() or 'http://wiki.xbmc.org/index.php?title=XBMC_Online_Manual'
-	w = ViewerWindow("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME,url=start_url)
+	w = ViewerWindowNormal("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME,url=start_url)
 	w.doModal()
 	del w
 	sys.modules.clear()
