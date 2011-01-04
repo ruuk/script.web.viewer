@@ -15,22 +15,23 @@ class HTMLConverter:
 		self.formColorC = 'FF010257'
 		
 		self.linkColor = 'FF015602'
+		self.imageColor = 'FF0102FE'
 		#static replacements		
 		#self.imageReplace = '[COLOR FFFF0000]I[/COLOR][COLOR FFFF8000]M[/COLOR][COLOR FF00FF00]G[/COLOR][COLOR FF0000FF]#[/COLOR][COLOR FFFF00FF]%s[/COLOR]: [I]%s[/I] '
-		self.imageReplace = '[COLOR FFFF0000]I[/COLOR][COLOR FFFF8000]M[/COLOR][COLOR FF00FF00]G[/COLOR][COLOR FF0000FF]#[/COLOR][COLOR FFFF00FF]%s[/COLOR]:%s'
+		self.imageReplace = '[COLOR FFFF0000]I[/COLOR][COLOR FFFF8000]M[/COLOR][COLOR FF00FF00]G[/COLOR][COLOR '+self.imageColor+']#%s%s [/COLOR]'
 
 #		self.linkReplace = unicode.encode('[CR]\g<text> (%s: [B]\g<url>[/B])' % u'Link','utf8')
 		self.linkReplace = '[COLOR '+self.linkColor+']%s[/COLOR] '
 		self.formReplace = '[CR][COLOR '+self.formColorA+']______________________________[/COLOR][CR][COLOR '+self.formColorB+'][B]- FORM: %s -[/B][/COLOR][CR]%s[CR][COLOR '+self.formColorC+']______________________________[/COLOR][CR][CR]'
 		self.submitReplace = '[\g<value>] '
 		#static filters
-		self.imageFilter = re.compile('<img[^>]+?src="(?P<url>(?:http://)?[^>"]+?)"[^>]*?/>')
 		self.linkFilter = re.compile('<a[^>]+?href="(?P<url>[^>"]+?)"[^>]*?(?:title="(?P<title>[^>"]+?)"[^>]*?)?>(?P<text>.*?)</a>')
+		self.imageFilter = re.compile('<img[^>]+?src="(?P<url>(?:http://)?[^>"]+?)"[^>]*?/>')
 		self.scriptFilter = re.compile('<script[^>]*?>.*?</script>',re.S)
 		self.styleFilter = re.compile('<style[^>]*?>.+?</style>')
 		self.commentFilter = re.compile('<!--.*?-->')
 		self.formFilter = re.compile('<form[^>]*?(?:id="(?P<id>[^>"]+?)"[^>]*?)?>(?P<contents>.+?)(?:</form>|<form>|$)')
-		self.labelFilter = re.compile('<label for="(?P<inputid>[^>"].*?)"[^>]*?>(?P<label>.*?)</label>')
+		self.labelFilter = re.compile('<label[^>]*?(?:(?:for=")|(?:>\s*<input[^>]*?id="))(?P<inputid>[^>"].*?)"[^>]*?>(?P<label>.*?)</label>')
 		self.altLabelFilter = re.compile('>(?:(?P<header>[^<>]*?)<(?!input|select)\w+[^>]*?>)?(?P<label>[^<>]+?)(?:<(?!input|select)\w+[^>]*?>)?(?:<input |<select )[^>]*?(?:id|name)="(?P<inputid>[^>"]+?)"')
 		self.submitFilter = re.compile('<input type=["\']submit["\'][^>]+?value=["\'](?P<value>[^>"\']+?)["\'][^>]*?>')
 		self.lineItemFilter = re.compile('<(li|/li|ul|ol|/ul|/ol)[^>]*?>')
@@ -81,18 +82,18 @@ class HTMLConverter:
 		html = self.brFilter.sub('[CR]',html)
 		html = self.blockQuoteFilter.sub(self.processIndent,html)
 		html = re.sub('<b(?: [^>]*?)?>','[B]',html).replace('</b>','[/B]')
-		html = html.replace('<i>','[I]').replace('</i>','[/I]')
+		html = re.sub('<i(\s[^>]*?)?>','[I]',html).replace('</i>','[/I]')
 		html = html.replace('<u>','_').replace('</u>','_')
 		html = re.sub('<strong[^>]*?>','[B]',html).replace('</strong>','[/B]')
 		html = re.sub('<h\d[^>]*?>','[CR][CR][B]',html)
 		html = re.sub('</h\d>','[/B][CR][CR]',html)
-		html = html.replace('<em>','[I]').replace('</em>','[/I]')
-		html = html.replace('<table>','[CR]')
+		html = re.sub('<em(\s[^>]*?)?>','[I]',html).replace('</em>','[/I]')
+		html = re.sub('<table[^>]*?>','[CR]',html)
 		html = html.replace('</table>','[CR][CR]')
 		html = html.replace('</div></div>','[CR]') #to get rid of excessive new lines
 		html = html.replace('</div>','[CR]')
 		html = html.replace('</p>','[CR][CR]')
-		html = html.replace('</tr>','[CR]')
+		html = html.replace('</tr>','[CR][CR]')
 		html = html.replace('</td><td>',self.tdSeperator)
 		html = self.tagFilter.sub('',html)
 		#print self.tagFilter.findall(html)
@@ -210,14 +211,21 @@ class HTMLConverter:
 	def imageConvert(self,m):
 		am = re.search('alt="([^"]+?)"',m.group(0))
 		alt = am and am.group(1) or ''
+		alt = alt and ':' + alt or ''
 		return self.imageReplace % (self.getImageNumber(m.group(1)),alt)
 		#return self.imageReplace % (self.imageCount,m.group('url'))
 
 	def linkConvert(self,m):
 		text = m.group('text')
-		if '<img' in text and not re.search('alt="[^"]+?"',text): text += 'LINK'
+		if '<img' in text:
+			am = re.search('alt="([^"]+?)"',text)
+			if am:
+				text = am.group(1) or 'LINK'
+			else:
+				text = self.imageFilter.sub('',text)
+				text += 'LINK'
 		elif not text:
-			text = text = m.groupdict().get('title','LINK')
+			text = m.groupdict().get('title','LINK')
 		#print 'x%sx' % unicode.encode(text,'ascii','replace')
 		return self.linkReplace % text
 	

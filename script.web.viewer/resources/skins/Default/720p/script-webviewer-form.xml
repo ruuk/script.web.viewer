@@ -89,7 +89,7 @@
 						<control type="label">
 							<posx>10</posx>
 							<posy>2</posy>
-							<width>192</width>
+							<width>262</width>
 							<height>36</height>
 							<font>font14</font>
 							<aligny>center</aligny>
@@ -100,16 +100,16 @@
 						</control>
 						<control type="image">
 							<description>text input</description>
-							<posx>210</posx>
+							<posx>280</posx>
 							<posy>2</posy>
-							<width>448</width>
+							<width>378</width>
 							<height>38</height>
 							<texture border="2">form-text.png</texture>
 						</control>
 						<control type="label">
-							<posx>223</posx>
+							<posx>293</posx>
 							<posy>3</posy>
-							<width>422</width>
+							<width>352</width>
 							<height>34</height>
 							<font>font12</font>
 							<aligny>center</aligny>
