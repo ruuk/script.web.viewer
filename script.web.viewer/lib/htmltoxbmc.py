@@ -16,40 +16,66 @@ class HTMLConverter:
 		
 		self.linkColor = 'FF015602'
 		self.imageColor = 'FF0102FE'
+		
+		self.frameColor = 'FF015642'
 		#static replacements		
 		#self.imageReplace = '[COLOR FFFF0000]I[/COLOR][COLOR FFFF8000]M[/COLOR][COLOR FF00FF00]G[/COLOR][COLOR FF0000FF]#[/COLOR][COLOR FFFF00FF]%s[/COLOR]: [I]%s[/I] '
 		self.imageReplace = '[COLOR FFFF0000]I[/COLOR][COLOR FFFF8000]M[/COLOR][COLOR FF00FF00]G[/COLOR][COLOR '+self.imageColor+']#%s%s [/COLOR]'
 
 #		self.linkReplace = unicode.encode('[CR]\g<text> (%s: [B]\g<url>[/B])' % u'Link','utf8')
 		self.linkReplace = '[COLOR '+self.linkColor+']%s[/COLOR] '
+		self.frameReplace = '[CR][COLOR '+self.frameColor+']FRAME%s[/COLOR][CR]'
 		self.formReplace = '[CR][COLOR '+self.formColorA+']______________________________[/COLOR][CR][COLOR '+self.formColorB+'][B]- FORM: %s -[/B][/COLOR][CR]%s[CR][COLOR '+self.formColorC+']______________________________[/COLOR][CR][CR]'
 		self.submitReplace = '[\g<value>] '
 		#static filters
-		self.linkFilter = re.compile('<a[^>]+?href="(?P<url>[^>"]+?)"[^>]*?(?:title="(?P<title>[^>"]+?)"[^>]*?)?>(?P<text>.*?)</a>')
-		self.imageFilter = re.compile('<img[^>]+?src="(?P<url>(?:http://)?[^>"]+?)"[^>]*?/>')
-		self.scriptFilter = re.compile('<script[^>]*?>.*?</script>',re.S)
-		self.styleFilter = re.compile('<style[^>]*?>.+?</style>')
+		self.linkFilter = re.compile('<a[^>]+?href="(?P<url>[^>"]+?)"[^>]*?(?:title="(?P<title>[^>"]+?)"[^>]*?)?>(?P<text>.*?)</a>',re.I)
+		self.imageFilter = re.compile('<img[^>]+?src="(?P<url>(?:http://)?[^>"]+?)"[^>]*?/>',re.I)
+		self.scriptFilter = re.compile('<script[^>]*?>.*?</script>',re.S|re.I)
+		self.styleFilter = re.compile('<style[^>]*?>.+?</style>',re.I)
 		self.commentFilter = re.compile('<!--.*?-->')
-		self.formFilter = re.compile('<form[^>]*?(?:id="(?P<id>[^>"]+?)"[^>]*?)?>(?P<contents>.+?)(?:</form>|<form>|$)')
-		self.labelFilter = re.compile('<label[^>]*?(?:(?:for=")|(?:>\s*<input[^>]*?id="))(?P<inputid>[^>"].*?)"[^>]*?>(?P<label>.*?)</label>')
-		self.altLabelFilter = re.compile('>(?:(?P<header>[^<>]*?)<(?!input|select)\w+[^>]*?>)?(?P<label>[^<>]+?)(?:<(?!input|select)\w+[^>]*?>)?(?:<input |<select )[^>]*?(?:id|name)="(?P<inputid>[^>"]+?)"')
-		self.submitFilter = re.compile('<input type=["\']submit["\'][^>]+?value=["\'](?P<value>[^>"\']+?)["\'][^>]*?>')
-		self.lineItemFilter = re.compile('<(li|/li|ul|ol|/ul|/ol)[^>]*?>')
-		self.ulFilter = re.compile('<ul[^>]*?>(.+?)</ul>')
-		self.olFilter = re.compile('<ol[^>]*?>(.+?)</ol>')
-		self.brFilter = re.compile('<br[ /]{0,2}>')
-		self.blockQuoteFilter = re.compile('<blockquote>(.+?)</blockquote>',re.S)
-		self.colorFilter = re.compile('<font color="([^>"]+?)">(.+?)</font>')
-		self.colorFilter2 = re.compile('<span[^>]*?style="[^>"]*?color: ?([^>]+?)"[^>]*?>(.+?)</span>')
+		self.formFilter = re.compile('<form[^>]*?(?:id="(?P<id>[^>"]+?)"[^>]*?)?>(?P<contents>.+?)(?:</form>|<form>|$)',re.I)
+		self.labelFilter = re.compile('<label[^>]*?(?:(?:for=")|(?:>\s*<input[^>]*?id="))(?P<inputid>[^>"].*?)"[^>]*?>(?P<label>.*?)</label>',re.I)
+		self.altLabelFilter = re.compile('>(?:(?P<header>[^<>]*?)<(?!input|select)\w+[^>]*?>)?(?P<label>[^<>]+?)(?:<(?!input|select)\w+[^>]*?>)?(?:<input |<select )[^>]*?(?:id|name)="(?P<inputid>[^>"]+?)"',re.I)
+		self.submitFilter = re.compile('<input type=["\']submit["\'][^>]+?value=["\'](?P<value>[^>"\']+?)["\'][^>]*?>',re.I)
+		self.lineItemFilter = re.compile('<(li|/li|ul|ol|/ul|/ol)[^>]*?>',re.I)
+		self.ulFilter = re.compile('<ul[^>]*?>(.+?)</ul>',re.I)
+		self.olFilter = re.compile('<ol[^>]*?>(.+?)</ol>',re.I)
+		self.brFilter = re.compile('<br[ /]{0,2}>',re.I)
+		self.blockQuoteFilter = re.compile('<blockquote>(.+?)</blockquote>',re.S|re.I)
+		self.colorFilter = re.compile('<font color="([^>"]+?)">(.+?)</font>',re.I)
+		self.colorFilter2 = re.compile('<span[^>]*?style="[^>"]*?color: ?([^>]+?)"[^>]*?>(.+?)</span>',re.I)
 		self.tagString = '<[^>]+?>'
 		interTagWSString = '(%s)\s*(%s)' % (self.tagString,self.tagString)
-		self.tagFilter = re.compile(self.tagString,re.S)
-		self.interTagWSFilter = re.compile(interTagWSString)
+		self.tagFilter = re.compile(self.tagString,re.S|re.I)
+		self.interTagWSFilter = re.compile(interTagWSString,re.I)
 		self.lineFilter = re.compile('[\n\r\t]')
-		self.titleFilter = re.compile('<title>(.+?)</title>')
-		self.bodyFilter = re.compile('<body[^>]*?>(.+)</body>',re.S)
+		self.titleFilter = re.compile('<title>(.+?)</title>',re.I)
+		self.bodyFilter = re.compile('<body[^>]*?>(.+)</body>',re.S|re.I)
+		self.frameFilter = re.compile('<i?frame[^>]*?src="(?P<url>[^>"]+?)"[^>]*?>(?:.*?</iframe>)?',re.I)
+		self.noframesFilter = re.compile('<noframes>.*?</noframes>',re.I)
 		
-		self.idFilter = re.compile('<[^>]+?(?:id|name)="([^>"]+?)"[^>]*?>',re.S)
+		self.idFilter = re.compile('<[^>]+?(?:id|name)="([^>"]+?)"[^>]*?>',re.S|re.I)
+		
+		self.displayTagFilter = re.compile('\[/?(?:(?:COLOR(?: [^\]]*?)?)|B|I)\]')
+		
+		#Secondary Filters
+		self.lineItemLineFilter = re.compile('<li[^>]*?>(.+?)</li>',re.I)
+		self.charCodeFilter = re.compile('&#(\d{1,5});',re.I)
+		self.charNameFilter = re.compile('&(\w+?);')
+		self.imageAltFilter = re.compile('alt="([^"]+?)"',re.I)
+		self.titleAttrFilter = re.compile('title="([^>"]*?)"',re.I)
+		self.nameAttrFilter = re.compile('name="([^>"]*?)"',re.I)
+		self.boldStartFilter = re.compile('<b(?: [^>]*?)?>',re.I)
+		self.italicsStartFilter = re.compile('<i(\s[^>]*?)?>',re.I)
+		self.strongStartFilter = re.compile('<strong[^>]*?>',re.I)
+		self.headerStartFilter = re.compile('<h\d[^>]*?>',re.I)
+		self.headerEndFilter = re.compile('</h\d>',re.I)
+		self.emStartFilter = re.compile('<em(\s[^>]*?)?>',re.I)
+		self.tableStartFilter = re.compile('<table[^>]*?>',re.I)
+		
+		self.headTagEndFilter = re.compile('</head>',re.I)
+		self.leadingTrailingWSFilter = re.compile('\s*([\n\r])\s*')
+		self.lineReduceFilter = re.compile('\n+')
 		
 	def htmlToDisplay(self,html):
 		if not html: return 'NO PAGE','NO PAGE'
@@ -67,28 +93,25 @@ class HTMLConverter:
 		html = self.imageFilter.sub(self.imageConvert,html)
 		html = self.formFilter.sub(self.formConvert,html)
 		html = self.submitFilter.sub(self.submitReplace,html)
+		html = self.frameFilter.sub(self.frameConvert,html)
+		html = self.noframesFilter.sub('',html)
+		html = self.styleFilter.sub('',html)
 		
 		html = self.processLineItems(html)
-		#LIP = LineItemProcessor(self)
-		#html = self.ulFilter.sub(LIP.process,html)
-		#LIP = LineItemProcessor(self,ordered=True)
-		#html = self.olFilter.sub(LIP.process,html)
 		
-		#html = self.ulFilter.sub(self.processBulletedList,html)
-		#html = self.olFilter.sub(self.processOrderedList,html)
 		
 		html = self.colorFilter.sub(self.convertColor,html)
 		html = self.colorFilter2.sub(self.convertColor,html)
 		html = self.brFilter.sub('[CR]',html)
 		html = self.blockQuoteFilter.sub(self.processIndent,html)
-		html = re.sub('<b(?: [^>]*?)?>','[B]',html).replace('</b>','[/B]')
-		html = re.sub('<i(\s[^>]*?)?>','[I]',html).replace('</i>','[/I]')
+		html = self.boldStartFilter.sub('[B]',html).replace('</b>','[/B]')
+		html = self.italicsStartFilter.sub('[I]',html).replace('</i>','[/I]')
 		html = html.replace('<u>','_').replace('</u>','_')
-		html = re.sub('<strong[^>]*?>','[B]',html).replace('</strong>','[/B]')
-		html = re.sub('<h\d[^>]*?>','[CR][CR][B]',html)
-		html = re.sub('</h\d>','[/B][CR][CR]',html)
-		html = re.sub('<em(\s[^>]*?)?>','[I]',html).replace('</em>','[/I]')
-		html = re.sub('<table[^>]*?>','[CR]',html)
+		html = self.strongStartFilter.sub('[B]',html).replace('</strong>','[/B]')
+		html = self.headerStartFilter.sub('[CR][CR][B]',html)
+		html = self.headerEndFilter.sub('[/B][CR][CR]',html)
+		html = self.emStartFilter.sub('[I]',html).replace('</em>','[/I]')
+		html = self.tableStartFilter.sub('[CR]',html)
 		html = html.replace('</table>','[CR][CR]')
 		html = html.replace('</div></div>','[CR]') #to get rid of excessive new lines
 		html = html.replace('</div>','[CR]')
@@ -108,7 +131,7 @@ class HTMLConverter:
 	
 	def cleanHTML(self,html):
 		try:
-			html = html.split('</head>')[1]
+			html = self.headTagEndFilter.split(html)[1]
 			#html = self.bodyFilter.search(html).group(1)
 		except:
 			#print 'ERROR - Could not parse <body> contents'
@@ -116,7 +139,7 @@ class HTMLConverter:
 		#html = self.lineFilter.sub(' ',html)
 		
 		#remove leading and trailing whitespace 
-		html = re.sub('\s*([\n\r])\s*',r'\1',html)
+		html = self.leadingTrailingWSFilter.sub(r'\1',html)
 		
 		#Remove whitespace between tags
 		html = self.interTagWSFilter.sub(r'\1\2',html)
@@ -132,11 +155,19 @@ class HTMLConverter:
 		html = self.commentFilter.sub('',html)
 		return html
 		
+	def frameConvert(self,m):
+		title = ''
+		title_m = self.titleAttrFilter.search(m.group(0))
+		if not title_m:
+			title_m = self.nameAttrFilter.search(m.group(0))
+		if title_m: title = ':%s' % title_m.group(1)
+		return self.frameReplace % title
+	
 	def cleanTags(self,m):
 		return self.lineFilter.sub('',m.group(0))
 	
 	def lineReduce(self,data):
-		return re.sub('\n+',' ',self.lineFilter.sub('\n',data))
+		return self.lineReduceFilter.sub(' ',self.lineFilter.sub('\n',data))
 	
 	def formConvert(self,m):
 		return self.formReplace % (m.group('id'),m.group('contents'))
@@ -209,7 +240,7 @@ class HTMLConverter:
 		return ''
 		
 	def imageConvert(self,m):
-		am = re.search('alt="([^"]+?)"',m.group(0))
+		am = self.imageAltFilter.search(m.group(0))
 		alt = am and am.group(1) or ''
 		alt = alt and ':' + alt or ''
 		return self.imageReplace % (self.getImageNumber(m.group(1)),alt)
@@ -218,7 +249,7 @@ class HTMLConverter:
 	def linkConvert(self,m):
 		text = m.group('text')
 		if '<img' in text:
-			am = re.search('alt="([^"]+?)"',text)
+			am = self.imageAltFilter.search(text)
 			if am:
 				text = am.group(1) or 'LINK'
 			else:
@@ -230,7 +261,7 @@ class HTMLConverter:
 		return self.linkReplace % text
 	
 	def processIndent(self,m):
-		return '    ' + re.sub('\n','\n    ',m.group(1)) + '\n'
+		return '    ' + m.group(1).replace('\n','\n    ') + '\n'
 		
 	def convertColor(self,m):
 		if m.group(1).startswith('#'):
@@ -248,7 +279,7 @@ class HTMLConverter:
 		return self.processList(m.group(1))
 			
 	def processList(self,html):
-		return re.sub('<li[^>]*?>(.+?)</li>',self.processItem,html) + '\n'
+		return self.lineItemLineFilter.sub(self.processItem,html) + '\n'
 
 	def processItem(self,m):
 		self.ordered_count += 1
@@ -262,8 +293,8 @@ class HTMLConverter:
 		
 	def convertHTMLCodes(self,html):
 		try:
-			html = re.sub('&#(\d{1,5});',self.cUConvert,html)
-			html = re.sub('&(\w+?);',self.cTConvert,html)
+			html = self.charCodeFilter.sub(self.cUConvert,html)
+			html = self.charNameFilter.sub(self.cTConvert,html)
 		except:
 			pass
 		return html

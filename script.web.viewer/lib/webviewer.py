@@ -87,8 +87,26 @@ class WebReader:
 		resData = self.checkRedirect(resData,callback)
 		if not callback(80,__language__(30101)): return None
 		if not resData: return None
-		return WebPage(resData,id=id,forms=resData.data and self.browser.forms() or [])
+		formsProcessed = True
+		forms = []
+		try:
+			forms = self.browser.forms()
+		except:
+			formsProcessed = False
+		if not formsProcessed:
+			try:
+				res = self.browser.response()
+				res.set_data(self.cleanHTML(res.get_data()))
+				self.browser.set_response(res)
+				forms = self.browser.forms()
+			except:
+				ERROR('Could not process forms')
+				
+		return WebPage(resData,id=id,forms=resData.data and forms or [])
 	
+	def cleanHTML(self,html):
+		return re.sub('<![^>]*?>','',html)
+		
 	def checkRedirect(self,resData,callback=None):
 		if not callback: callback = self.fakeCallback
 		match = re.search('<meta[^>]+?http-equiv="Refresh"[^>]*?URL=(?P<url>[^>"]+?)"[^>]*?/>',resData.data)
@@ -224,8 +242,10 @@ class WebPage:
 		self.linkCTag = '[COLOR %s]' % HC.linkColor
 		self.formCTag = '[COLOR %s]' % HC.formColorB
 		self.imageTag = '[COLOR %s]' % HC.imageColor
+		self.frameCTag = '[COLOR %s]' % HC.frameColor
 		self._links = []
 		self._images = []
+		self._frames = []
 		self.elements = []
 		ct = 0
 		for f in forms:
@@ -245,16 +265,18 @@ class WebPage:
 		disp = self.forDisplay()
 		#import codecs
 		#codecs.open('/home/ruuk/test.txt','w',encoding='utf-8').write(disp)
-		alltags = '(%s|%s|%s)' % (re.escape(self.linkCTag),re.escape(self.imageTag),re.escape(self.formCTag))
-		types = {self.linkCTag:PE_LINK,self.imageTag:PE_IMAGE,self.formCTag:PE_FORM}
+		alltags = '(%s|%s|%s|%s)' % (re.escape(self.linkCTag),re.escape(self.imageTag),re.escape(self.formCTag),re.escape(self.frameCTag))
+		types = {self.linkCTag:PE_LINK,self.imageTag:PE_IMAGE,self.formCTag:PE_FORM,self.frameCTag:PE_FRAME}
 		pre = None
 		stack = ''
 		ct=0
 		fct=0
 		lct=0
 		ict=0
+		frct=0
 		self.links()
 		self.images()
+		self.frames()
 		self.elements = []
 		for part in re.split(alltags,disp):
 			if pre != None:
@@ -273,6 +295,9 @@ class WebPage:
 				elif type == PE_FORM:
 					element = self.forms[fct]
 					fct += 1
+				elif type == PE_FRAME:
+					element = self._frames[frct]
+					frct += 1
 				element.elementIndex = ct
 				element.displayPageIndex = index
 				element.lineNumber = lines
@@ -355,6 +380,18 @@ class WebPage:
 			ct+=1
 		return self._links
 	
+	def frameMatches(self):
+		html = unicode(self.html,'utf8','replace')
+		return HC.frameFilter.finditer(HC.cleanHTML(html))
+	
+	def frames(self):
+		if self._frames: return self._frames
+		ct = 0
+		for m in self.frameMatches():
+			self._frames.append(Frame(m,self.url,ct))
+			ct+=1
+		return self._frames
+	
 	def labels(self):
 		if self._labels: return self._labels, self._headers
 		self._labels = {}
@@ -391,6 +428,7 @@ class WebPage:
 PE_LINK = 'LINK'
 PE_IMAGE = 'IMAGE'
 PE_FORM = 'FORM'
+PE_FRAME = 'FRAME'
 
 class PageElement:
 	def __init__(self,type=0,type_index=-1):
@@ -415,7 +453,19 @@ class Form(PageElement):
 	def __init__(self,form=None,form_index=-1):
 		PageElement.__init__(self,PE_FORM,form_index)
 		self.form = form
+
+class Frame(PageElement):
+	def __init__(self,match=None,url='',frame_index=-1):
+		PageElement.__init__(self,PE_FRAME,frame_index)
+		self.baseUrl = url
+		self.url = ''
+		if match: self.url = match.group('url')
 		
+	def fullURL(self):
+		return fullURL(self.baseUrl,self.url)
+	
+	def isImage(self): return False
+
 class Link(PageElement):
 	def __init__(self,match=None,url='',link_index=-1):
 		PageElement.__init__(self,PE_LINK,link_index)
@@ -731,6 +781,7 @@ class LineItem:
 		self.text = text
 		self.IDs = ids
 		self.index = index
+		self.displayLen = len(HC.displayTagFilter.sub('',self.text.split('[CR]',1)[0]))
 		
 class LineView:
 	def __init__(self,view,scrollbar=None):
@@ -755,7 +806,7 @@ class LineView:
 	def setDisplay(self,text=None):
 		if not text: return self.update()
 		self.display = text
-		self.view.setText(text)
+		self.view.setText('[CR]' + text)
 		
 	def addItem(self,lineItem):
 		self.items.append(lineItem)
@@ -775,7 +826,7 @@ class LineView:
 		if not self.items:
 			LOG('LineView update() - No Items')
 			return
-		self.view.setText(self.items[self.pos].text)
+		self.view.setText('[CR]' + self.items[self.pos].text)
 		self.setScroll()
 		
 	def getSelectedPosition(self):
@@ -818,9 +869,9 @@ class ViewerWindow(BaseWindow):
 		self.linkCTag = '[COLOR %s]' % HC.linkColor
 		self.formCTag = '[COLOR %s]' % HC.formColorB
 		self.imageTag = '[COLOR %s]' % HC.imageColor
-		self.cTags = {PE_FORM:self.formCTag,PE_LINK:self.linkCTag,PE_IMAGE:self.imageTag}
+		self.frameCTag = '[COLOR %s]' % HC.frameColor
+		self.cTags = {PE_FORM:self.formCTag,PE_LINK:self.linkCTag,PE_IMAGE:self.imageTag,PE_FRAME:self.frameCTag}
 		self.selectedCTag = '[COLOR %s]' % 'FFFE1203'
-		self.preface = '[CR]'
 		self.selected = None
 		self.lastPos = 0
 		self.linkLastPos = 0
@@ -912,8 +963,12 @@ class ViewerWindow(BaseWindow):
 	def refreshDo(self,page):
 		if not page or not page.isDisplayable():
 			if page and not page.isDisplayable():
-				if xbmcgui.Dialog().yesno(__language__(30113),__language__(30114),page.getFileName(),__language__(30115) % page.content):
+				if page.content.startswith('video'):
+					self.showVideo(page.url)
+				elif xbmcgui.Dialog().yesno(__language__(30113),__language__(30114),page.getFileName(),__language__(30115) % page.content):
 					self.downloadLink(page.url,page.getFileName())
+			self.endProgress()
+			self.getControl(104).setLabel(self.page.title or self.page.url)
 			return
 		self.selected = None
 		self.lastPos = 0
@@ -929,7 +984,7 @@ class ViewerWindow(BaseWindow):
 		#self.endProgress()
 	
 	LINE_COUNT = 28
-	CHAR_PER_LINE = 70
+	CHAR_PER_LINE = 80
 	def pageUp(self):
 		pos = self.pageList.getSelectedPosition()
 		ct = 0
@@ -937,8 +992,11 @@ class ViewerWindow(BaseWindow):
 		for i in range(pos*-1,1):
 			i = abs(i)
 			item = self.pageList.getListItem(i)
-			line = item.text.split('[CR]',1)[0]
-			ct += (len(line) / self.CHAR_PER_LINE) or 1
+			#line = item.text.split('[CR]',1)[0]
+			if item.displayLen < self.CHAR_PER_LINE:
+				ct += 1
+			else:
+				ct += (item.displayLen / self.CHAR_PER_LINE) + 1
 			if ct >= self.LINE_COUNT: break
 		if i: i+=1
 		if i > pos: i=pos
@@ -951,8 +1009,11 @@ class ViewerWindow(BaseWindow):
 		ct = 0
 		for i in range(pos,max):
 			item = self.pageList.getListItem(i)
-			line = item.text.split('[CR]',1)[0]
-			ct += (len(line) / self.CHAR_PER_LINE) or 1
+			#line = item.text.split('[CR]',1)[0]
+			if item.displayLen < self.CHAR_PER_LINE:
+				ct += 1
+			else:
+				ct += (item.displayLen / self.CHAR_PER_LINE) + 1
 			if ct >= self.LINE_COUNT: break
 		else:
 			return
@@ -980,6 +1041,9 @@ class ViewerWindow(BaseWindow):
 		xbmcgui.lock()
 		try:
 			element = self.currentElement()
+			if not element:
+				xbmcgui.unlock()
+				return
 			itemIndex = self.pageList.getSelectedPosition()
 			if itemIndex != element.lineNumber:
 				#index = self.currentElementIndex
@@ -988,7 +1052,7 @@ class ViewerWindow(BaseWindow):
 				#self.currentElementIndex = index
 			item = self.pageList.getListItem(element.lineNumber)
 			disp = item.text
-			index = element.displayPageIndex+len(self.preface) - item.index
+			index = element.displayPageIndex - item.index
 			#print self.currentElementIndex
 			#print '%s %s %s' % (index,element.displayPageIndex,item.index)
 			one = disp[0:index]
@@ -1020,6 +1084,10 @@ class ViewerWindow(BaseWindow):
 				self.linkList.setVisible(False)
 				self.controlList.setVisible(False)
 				self.imageList.setVisible(True)
+			elif element.type == PE_FRAME:
+				self.linkList.setVisible(False)
+				self.controlList.setVisible(False)
+				self.imageList.setVisible(False)
 			else:
 				self.showForm(element.form)
 				self.linkList.setVisible(False)
@@ -1221,7 +1289,7 @@ class ViewerWindow(BaseWindow):
 			index = 0
 			while disp:
 				ids = ','.join(self.idFilter.findall(disp))
-				label = self.preface + '[CR]'.join(self.idFilter.sub('',disp).split('[CR]')[:35])
+				label = '[CR]'.join(self.idFilter.sub('',disp).split('[CR]')[:35])
 				item = LineItem(label,ids,index)
 				plist.addItem(item)
 				if not '[CR]' in disp: break
@@ -1315,6 +1383,8 @@ class ViewerWindow(BaseWindow):
 		elif element.type == PE_IMAGE:
 			self.formFocused = True
 			self.setFocusId(150)
+		elif element.type == PE_FRAME:
+			self.linkSelected(element)
 		else:
 			self.formFocused = True
 			self.setFocusId(120)
@@ -1323,7 +1393,7 @@ class ViewerWindow(BaseWindow):
 	def linkSelected(self,link=None):
 		if not link:
 			link = self.currentElement()
-		if not link.type == PE_LINK: return
+		if not link.type == PE_LINK and not link.type == PE_FRAME: return
 		
 		if link.url.startswith('#'):
 			self.gotoID(link.url)
@@ -1351,6 +1421,12 @@ class ViewerWindow(BaseWindow):
 			del w
 		else:
 			xbmc.executebuiltin('SlideShow(%s)' % base)
+			
+	def showVideo(self,url):
+		if self.IS_DIALOG:
+			pass
+		else:
+			xbmc.executebuiltin('PlayMedia(%s)' % url)
 	
 	def selectLinkByIndex(self,idx):
 		element = self.page.getElementByTypeIndex(PE_LINK,idx)
@@ -1375,7 +1451,7 @@ class ViewerWindow(BaseWindow):
 	def selectItemFirstElement(self,item):
 		disp = item.text
 		element = self.currentElement()
-		index = element.displayPageIndex+len(self.preface) - item.index
+		index = element.displayPageIndex - item.index
 		disp = disp[0:index] + disp[index:].replace(self.cTags[element.type],self.selectedCTag,1)
 		try:
 			xbmcgui.lock()

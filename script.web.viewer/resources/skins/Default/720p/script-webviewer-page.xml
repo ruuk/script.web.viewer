@@ -46,7 +46,7 @@
 				<textcolor>black</textcolor>
 				<aligny>center</aligny>
 				<align>left</align>
-				<wrapmultiline>true</wrapmultiline>
+				<wrapmultiline>false</wrapmultiline>
 			</control>
 
 			<control type="group">
