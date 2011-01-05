@@ -59,6 +59,9 @@ class ResponseData:
 		self.contentDisp = content_disp
 		self.data = data
 		
+	def hasText(self):
+		return self.content.startswith('text') and self.data
+		
 class WebReader:
 	def __init__(self):
 		self.browser = mechanize.Browser()
@@ -89,18 +92,19 @@ class WebReader:
 		if not resData: return None
 		formsProcessed = True
 		forms = []
-		try:
-			forms = self.browser.forms()
-		except:
-			formsProcessed = False
-		if not formsProcessed:
+		if resData.hasText():
 			try:
-				res = self.browser.response()
-				res.set_data(self.cleanHTML(res.get_data()))
-				self.browser.set_response(res)
 				forms = self.browser.forms()
 			except:
-				ERROR('Could not process forms')
+				formsProcessed = False
+			if not formsProcessed:
+				try:
+					res = self.browser.response()
+					res.set_data(self.cleanHTML(res.get_data()))
+					self.browser.set_response(res)
+					forms = self.browser.forms()
+				except:
+					ERROR('Could not process forms')
 				
 		return WebPage(resData,id=id,forms=resData.data and forms or [])
 	
@@ -964,7 +968,9 @@ class ViewerWindow(BaseWindow):
 		if not page or not page.isDisplayable():
 			if page and not page.isDisplayable():
 				if page.content.startswith('video'):
-					self.showVideo(page.url)
+					self.playMedia(page.url)
+				elif page.content.startswith('audio'):
+					self.playMedia(page.url,mtype='music')
 				elif xbmcgui.Dialog().yesno(__language__(30113),__language__(30114),page.getFileName(),__language__(30115) % page.content):
 					self.downloadLink(page.url,page.getFileName())
 			self.endProgress()
@@ -1422,11 +1428,12 @@ class ViewerWindow(BaseWindow):
 		else:
 			xbmc.executebuiltin('SlideShow(%s)' % base)
 			
-	def showVideo(self,url):
+	def playMedia(self,url,mtype='video'):
 		if self.IS_DIALOG:
 			pass
 		else:
 			xbmc.executebuiltin('PlayMedia(%s)' % url)
+			xbmc.executebuiltin('ActivateWindow(%sosd)' % mtype)
 	
 	def selectLinkByIndex(self,idx):
 		element = self.page.getElementByTypeIndex(PE_LINK,idx)
