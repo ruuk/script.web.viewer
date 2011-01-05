@@ -1366,6 +1366,11 @@ class ViewerWindow(BaseWindow):
 		elif controlID == 109:
 			self.gotoURL()
 			
+	def doHelp(self):
+		w = xbmcgui.WindowXMLDialog("script-webviewer-control-help.xml" ,__addon__.getAddonInfo('path'),THEME)
+		w.doModal()
+		del w
+	
 	def gotoID(self,id):
 		id = id.replace('#','')
 		plist = self.pageList
@@ -1586,6 +1591,9 @@ class ViewerWindow(BaseWindow):
 		elif action == ACTION_SHOW_INFO:
 				self.focusElementList()
 				return
+		elif action == ACTION_PLAYER_PLAY:
+				self.refresh()
+				return
 		
 		BaseWindow.onAction(self,action)
 		
@@ -1601,7 +1609,7 @@ class ViewerWindow(BaseWindow):
 		if element and not etype: etype = element.type
 		
 		#populate options
-		options = [__language__(30131),__language__(30132),__language__(30133)]
+		options = [__language__(30131),__language__(30132),__language__(30133),__language__(30146)]
 		if etype == PE_LINK:
 			options += [__language__(30134),__language__(30135)]
 			if element.image: options.append(__language__(30136))
@@ -1616,16 +1624,17 @@ class ViewerWindow(BaseWindow):
 		elif idx == 0: self.gotoURL()
 		elif idx == 1: self.bookmarks()
 		elif idx == 2: self.settings()
+		elif idx == 3: self.doHelp()
 		
 		#handle contextual options
 		if etype == PE_LINK:
-			if idx == 3: self.linkSelected()
-			elif idx == 4: self.downloadLink(element.fullURL())
+			if idx == 4: self.linkSelected()
+			elif idx == 5: self.downloadLink(element.fullURL())
 			elif options[idx] == __language__(30136): self.showImage(fullURL(self.url,element.image))
 			elif options[idx] == __language__(30137): self.showImage(element.fullURL())
 		elif etype == PE_IMAGE:
-			if idx == 3: self.showImage(element.fullURL())
-			elif idx == 4: self.downloadLink(element.fullURL())
+			if idx == 4: self.showImage(element.fullURL())
+			elif idx == 5: self.downloadLink(element.fullURL())
 		elif etype == PE_FORM:
 			if idx == 4: self.submitForm(None)		
 		

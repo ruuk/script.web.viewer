@@ -286,20 +286,20 @@
 				<scrolltime>0</scrolltime>
 				<itemlayout height="168">
 					<control type="image">
-						<posx>16</posx>
+						<posx>1</posx>
 						<posy>1</posy>
-						<width>300</width>
+						<width>500</width>
 						<height>166</height>
 						<texture border="10">webviewer-text-background.png</texture>
 						<visible>true</visible>
 						<colordiffuse>CC999999</colordiffuse>
 					</control>
 					<control type="image">
-						<posx>16</posx>
+						<posx>1</posx>
 						<posy>1</posy>
-						<width>300</width>
+						<width>500</width>
 						<height>166</height>
-						<texture border="10">webviewer-FBbutton-focus.png</texture>
+						<texture border="10">webviewer-button-focus.png</texture>
 						<visible>true</visible>
 						<colordiffuse>FFFFFFFF</colordiffuse>
 					</control>
@@ -327,12 +327,12 @@
 						<visible>true</visible>
 					</control>
 				</itemlayout>
-				<focusedlayout height="379">
+				<focusedlayout height="329">
 					<control type="image">
 						<posx>1</posx>
 						<posy>1</posy>
 						<width>500</width>
-						<height>298</height>
+						<height>327</height>
 						<texture border="10">webviewer-text-background.png</texture>
 						<visible>true</visible>
 						<colordiffuse>FFFFFFFF</colordiffuse>
@@ -341,16 +341,16 @@
 						<posx>1</posx>
 						<posy>1</posy>
 						<width>500</width>
-						<height>377</height>
-						<texture border="10">webviewer-FBbutton-focus.png</texture>
+						<height>327</height>
+						<texture border="10">webviewer-button-focus.png</texture>
 						<visible>true</visible>
 						<colordiffuse>FFFFFFFF</colordiffuse>
 					</control>
 					<control type="image">
 						<posx>13</posx>
 						<posy>9</posy>
-						<width>362</width>
-						<height>362</height>
+						<width>292</width>
+						<height>292</height>
 						<texture fallback="webviewer-broken-image.png">$INFO[ListItem.Icon]</texture>
 						<visible>true</visible>
 						<colordiffuse>FFFFFFFF</colordiffuse>
@@ -358,7 +358,7 @@
 					</control>
 					<control type="label">
 						<posx>10</posx>
-						<posy>264</posy>
+						<posy>295</posy>
 						<width>365</width>
 						<height>30</height>
 						<font>font12</font>
@@ -403,7 +403,7 @@
 						<posy>1</posy>
 						<width>500</width>
 						<height>58</height>
-						<texture border="10">webviewer-FBbutton-focus.png</texture>
+						<texture border="10">webviewer-button-focus.png</texture>
 						<visible>true</visible>
 						<colordiffuse>FFFFFFFF</colordiffuse>
 					</control>
@@ -447,7 +447,7 @@
 						<posy>1</posy>
 						<width>500</width>
 						<height>118</height>
-						<texture border="10">webviewer-FBbutton-focus.png</texture>
+						<texture border="10">webviewer-button-focus.png</texture>
 						<visible>true</visible>
 						<colordiffuse>FFFFFFFF</colordiffuse>
 					</control>
