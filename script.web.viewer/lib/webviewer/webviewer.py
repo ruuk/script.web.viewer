@@ -1387,14 +1387,30 @@ class ViewerWindow(BaseWindow):
 		if element.type == PE_LINK:
 			self.linkSelected(element)
 		elif element.type == PE_IMAGE:
-			self.formFocused = True
-			self.setFocusId(150)
+			self.showImage(element.fullURL())
 		elif element.type == PE_FRAME:
 			self.linkSelected(element)
 		else:
 			self.formFocused = True
 			self.setFocusId(120)
 			#self.doForm(form=item)
+		
+	def focusElementList(self):
+		element = self.currentElement()
+		if not element:
+			LOG('focusElementList() - No Element')
+			return
+		if element.type == PE_LINK:
+			self.formFocused = True
+			self.setFocusId(148)
+		elif element.type == PE_IMAGE:
+			self.formFocused = True
+			self.setFocusId(150)
+		elif element.type == PE_FRAME:
+			pass
+		else:
+			self.formFocused = True
+			self.setFocusId(120)
 		
 	def linkSelected(self,link=None):
 		if not link:
@@ -1556,7 +1572,7 @@ class ViewerWindow(BaseWindow):
 				return
 			elif action == ACTION_CONTEXT_MENU:
 				self.doMenu()
-				return	
+				return
 			
 		if action == ACTION_PARENT_DIR or action == ACTION_PLAYER_REWIND:
 			self.back()
@@ -1567,6 +1583,9 @@ class ViewerWindow(BaseWindow):
 		elif action == ACTION_PAUSE:
 			self.viewHistory()
 			return
+		elif action == ACTION_SHOW_INFO:
+				self.focusElementList()
+				return
 		
 		BaseWindow.onAction(self,action)
 		
