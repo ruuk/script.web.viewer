@@ -16,7 +16,7 @@
 				<posy>0</posy>
 				<width>1280</width>
 				<height>720</height>
-				<texture border="40">default-panel-full.png</texture>
+				<texture border="40">webviewer-default-panel-full.png</texture>
 				<colordiffuse>FF000000</colordiffuse>
 			</control>
 
@@ -26,7 +26,7 @@
 				<posy>4</posy>
 				<width>1260</width>
 				<height>80</height>
-				<texture border="10">title-background.png</texture>
+				<texture border="10">webviewer-title-background.png</texture>
 			</control>
 			<control type="image" id="102">
 				<description>Icon</description>
@@ -34,7 +34,7 @@
 				<posy>21</posy>
 				<width>48</width>
 				<height>48</height>
-				<texture fallback="corner-icon.png">corner-icon.png</texture>
+				<texture fallback="webviewer-corner-icon.png">webviewer-corner-icon.png</texture>
 			</control>
 			<control type="label" id="104">
 				<description>Topic</description>
@@ -68,8 +68,8 @@
 					<align>right</align>
 					<textcolor>FF000000</textcolor>
 					<textoffsetx>33</textoffsetx>
-					<texturefocus>left-focus.png</texturefocus>
-					<texturenofocus>left-nofocus.png</texturenofocus>
+					<texturefocus>webviewer-left-focus.png</texturefocus>
+					<texturenofocus>webviewer-left-nofocus.png</texturenofocus>
 				</control>
 				<control type="image">
 					<description>Back Disabled</description>
@@ -78,7 +78,7 @@
 					<width>48</width>
 					<height>48</height>
 					<colordiffuse>30FFFFFF</colordiffuse>
-					<texture>left-nofocus.png</texture>
+					<texture>webviewer-left-nofocus.png</texture>
 					<visible>!Control.IsVisible(200)</visible>
 				</control>
 				<control type="button" id="202">
@@ -97,8 +97,8 @@
 					<align>left</align>
 					<textcolor>FF000000</textcolor>
 					<textoffsetx>4</textoffsetx>
-					<texturefocus>right-focus.png</texturefocus>
-					<texturenofocus>right-nofocus.png</texturenofocus>
+					<texturefocus>webviewer-right-focus.png</texturefocus>
+					<texturenofocus>webviewer-right-nofocus.png</texturenofocus>
 				</control>
 				<control type="image">
 					<description>Back Disabled</description>
@@ -107,7 +107,7 @@
 					<width>48</width>
 					<height>48</height>
 					<colordiffuse>30FFFFFF</colordiffuse>
-					<texture>right-nofocus.png</texture>
+					<texture>webviewer-right-nofocus.png</texture>
 					<visible>!Control.IsVisible(202)</visible>
 				</control>
 				<control type="button" id="105">
@@ -124,8 +124,8 @@
 					<textcolor>FF000000</textcolor>
 					<aligny>center</aligny>
 					<align>center</align>
-					<texturefocus>refresh.png</texturefocus>
-					<texturenofocus>refresh-nofocus.png</texturenofocus>
+					<texturefocus>webviewer-refresh.png</texturefocus>
+					<texturenofocus>webviewer-refresh-nofocus.png</texturenofocus>
 					<visible>!Control.IsVisible(106)</visible>
 				</control>
 				<control type="button" id="106">
@@ -143,8 +143,8 @@
 					<aligny>center</aligny>
 					<align>center</align>
 					<colordiffuse>FFFF0000</colordiffuse>
-					<texturefocus>stop.png</texturefocus>
-					<texturenofocus>stop-nofocus.png</texturenofocus>
+					<texturefocus>webviewer-stop.png</texturefocus>
+					<texturenofocus>webviewer-stop-nofocus.png</texturenofocus>
 				</control>
 			</control>
 			
@@ -154,8 +154,8 @@
 		        <posy>15</posy>
 		        <width>32</width>
 		        <height>28</height>
-		        <texturefocus>close-button-focus.png</texturefocus>
-		        <texturenofocus>close-button.png</texturenofocus>
+		        <texturefocus>webviewer-close-button-focus.png</texturefocus>
+		        <texturenofocus>webviewer-close-button.png</texturenofocus>
 		        <visible>system.getbool(input.enablemouse)</visible>
 		        <onclick>PreviousMenu</onclick>
 	      	</control>
@@ -165,7 +165,7 @@
 				<posy>4</posy>
 				<width>1260</width>
 				<height>80</height>
-				<texture>overlay.png</texture>
+				<texture>webviewer-overlay.png</texture>
 			</control>
 			<control type="button" id="109">
 				<description>Url Box</description>
@@ -173,8 +173,8 @@
 				<posy>40</posy>
 				<width>840</width>
 				<height>30</height>
-				<texturenofocus border="2">form-text.png</texturenofocus>
-				<texturefocus border="2">form-text.png</texturefocus>
+				<texturenofocus border="2">webviewer-form-text.png</texturenofocus>
+				<texturefocus border="2">webviewer-form-text.png</texturefocus>
 			</control>
 			<control type="label" id="108">
 				<posx>304</posx>
@@ -193,7 +193,7 @@
 				<posy>42</posy>
 				<width>736</width>
 				<height>1</height>
-				<texture>TRseparator.png</texture>
+				<texture>webviewer-progress.png</texture>
 				<visible>false</visible>
 			</control>
 			<control type="image" id="310">
@@ -201,7 +201,7 @@
 				<posy>42</posy>
 				<width>1</width>
 				<height>27</height>
-				<texture>progress.png</texture>
+				<texture>webviewer-progress.png</texture>
 			</control>
 			
 			<control type="image" id="351">
@@ -212,7 +212,7 @@
 				<posy>90</posy>
 				<width>1260</width>
 				<height>626</height>
-				<texture border="10">text-background.png</texture>
+				<texture border="10">webviewer-text-background.png</texture>
 				<visible>true</visible>
 			</control>
 			<control type="textbox" id="123">
@@ -237,8 +237,8 @@
 				<onright>122</onright>
 				<onup>122</onup>
 				<ondown>122</ondown>
-		        <texturefocus>transparent.png</texturefocus>
-		        <texturenofocus>transparent.png</texturenofocus>
+		        <texturefocus>webviewer-transparent.png</texturefocus>
+		        <texturenofocus>webviewer-transparent.png</texturenofocus>
 	      	</control>
 	      	<control type="image" id="124">
 				<description>Scroll Bar</description>
@@ -246,7 +246,7 @@
 				<posy>100</posy>
 				<width>4</width>
 				<height>30</height>
-				<texture>progress.png</texture>
+				<texture>webviewer-progress.png</texture>
 				<visible>true</visible>
 			</control>
 
@@ -256,7 +256,7 @@
 			<posy>96</posy>
 			<width>715</width>
 			<height>630</height>
-			<texture border="40">default-panel.png</texture>
+			<texture border="40">webviewer-default-panel.png</texture>
 			<colordiffuse>FF000000</colordiffuse>
 		</control>
 		<control type="image">
@@ -266,23 +266,12 @@
 			<posy>96</posy>
 			<width>715</width>
 			<height>630</height>
-			<texture border="40">default-panel.png</texture>
+			<texture border="40">webviewer-default-panel.png</texture>
 		</control>
 		
 		<control type="group" id="149">
 			<posx>845</posx>
 			<posy>96</posy>
-			<!--<animation effect="slide" end="-300,0" time="200"
-				condition="Control.HasFocus(149)|Control.HasFocus(150)">Conditional</animation>
-			<control type="image">
-				<posx>0</posx>
-				<posy>0</posy>
-				<width>315</width>
-				<height>720</height>
-				<texture border="10">Slide-panel.png</texture>
-				<visible>true</visible>
-				<colordiffuse>FFFFFFFF</colordiffuse>
-			</control> -->
 			<control type="list" id="150">
 				<posx>25</posx>
 				<posy>17</posy>
@@ -301,7 +290,7 @@
 						<posy>1</posy>
 						<width>300</width>
 						<height>166</height>
-						<texture border="10">text-background.png</texture>
+						<texture border="10">webviewer-text-background.png</texture>
 						<visible>true</visible>
 						<colordiffuse>CC999999</colordiffuse>
 					</control>
@@ -310,7 +299,7 @@
 						<posy>1</posy>
 						<width>300</width>
 						<height>166</height>
-						<texture border="10">FBbutton-focus.png</texture>
+						<texture border="10">webviewer-FBbutton-focus.png</texture>
 						<visible>true</visible>
 						<colordiffuse>FFFFFFFF</colordiffuse>
 					</control>
@@ -319,7 +308,7 @@
 						<posy>4</posy>
 						<width>128</width>
 						<height>128</height>
-						<texture fallback="broken-image.png">$INFO[ListItem.Icon]</texture>
+						<texture fallback="webviewer-broken-image.png">$INFO[ListItem.Icon]</texture>
 						<visible>true</visible>
 						<colordiffuse>A0FFFFFF</colordiffuse>
 						<aspectratio>keep</aspectratio>
@@ -344,7 +333,7 @@
 						<posy>1</posy>
 						<width>500</width>
 						<height>298</height>
-						<texture border="10">text-background.png</texture>
+						<texture border="10">webviewer-text-background.png</texture>
 						<visible>true</visible>
 						<colordiffuse>FFFFFFFF</colordiffuse>
 					</control>
@@ -353,7 +342,7 @@
 						<posy>1</posy>
 						<width>500</width>
 						<height>377</height>
-						<texture border="10">FBbutton-focus.png</texture>
+						<texture border="10">webviewer-FBbutton-focus.png</texture>
 						<visible>true</visible>
 						<colordiffuse>FFFFFFFF</colordiffuse>
 					</control>
@@ -362,7 +351,7 @@
 						<posy>9</posy>
 						<width>362</width>
 						<height>362</height>
-						<texture fallback="broken-image.png">$INFO[ListItem.Icon]</texture>
+						<texture fallback="webviewer-broken-image.png">$INFO[ListItem.Icon]</texture>
 						<visible>true</visible>
 						<colordiffuse>FFFFFFFF</colordiffuse>
 						<aspectratio>keep</aspectratio>
@@ -387,14 +376,6 @@
 		<control type="group" id="147">
 			<posx>845</posx>
 			<posy>96</posy>
-			<!--
-				<animation effect="slide" end="500,0" time="200"
-				condition="Control.HasFocus(147)|Control.HasFocus(148)">Conditional</animation>
-				<control type="image"> <posx>0</posx> <posy>0</posy>
-				<width>515</width> <height>720</height> <texture
-				border="10">Slide-panel.png</texture> <visible>true</visible>
-				<colordiffuse>FFFFFFFF</colordiffuse> </control>
-			-->
 			<control type="list" id="148">
 				<posx>25</posx>
 				<posy>17</posy>
@@ -413,7 +394,7 @@
 						<posy>1</posy>
 						<width>500</width>
 						<height>58</height>
-						<texture border="10">text-background.png</texture>
+						<texture border="10">webviewer-text-background.png</texture>
 						<visible>true</visible>
 						<colordiffuse>CC999999</colordiffuse>
 					</control>
@@ -422,7 +403,7 @@
 						<posy>1</posy>
 						<width>500</width>
 						<height>58</height>
-						<texture border="10">FBbutton-focus.png</texture>
+						<texture border="10">webviewer-FBbutton-focus.png</texture>
 						<visible>true</visible>
 						<colordiffuse>FFFFFFFF</colordiffuse>
 					</control>
@@ -431,7 +412,7 @@
 						<posy>6</posy>
 						<width>58</width>
 						<height>48</height>
-						<texture fallback="broken-image.png">$INFO[ListItem.Icon]</texture>
+						<texture fallback="webviewer-broken-image.png">$INFO[ListItem.Icon]</texture>
 						<aspectratio>keep</aspectratio>
 						<visible>true</visible>
 						<colordiffuse>FFFFFFFF</colordiffuse>
@@ -457,7 +438,7 @@
 						<posy>1</posy>
 						<width>500</width>
 						<height>118</height>
-						<texture border="10">text-background.png</texture>
+						<texture border="10">webviewer-text-background.png</texture>
 						<visible>true</visible>
 						<colordiffuse>FFFFFFFF</colordiffuse>
 					</control>
@@ -466,7 +447,7 @@
 						<posy>1</posy>
 						<width>500</width>
 						<height>118</height>
-						<texture border="10">FBbutton-focus.png</texture>
+						<texture border="10">webviewer-FBbutton-focus.png</texture>
 						<visible>true</visible>
 						<colordiffuse>FFFFFFFF</colordiffuse>
 					</control>
@@ -475,7 +456,7 @@
 						<posy>10</posy>
 						<width>100</width>
 						<height>100</height>
-						<texture fallback="broken-image.png">$INFO[ListItem.Icon]</texture>
+						<texture fallback="webviewer-broken-image.png">$INFO[ListItem.Icon]</texture>
 						<aspectratio>keep</aspectratio>
 						<visible>true</visible>
 						<colordiffuse>FFFFFFFF</colordiffuse>
@@ -552,7 +533,7 @@
 							<posy>14</posy>
 							<width>12</width>
 							<height>12</height>
-							<texture border="2">form-checkbox-checked.png</texture>
+							<texture border="2">webviewer-form-checkbox-checked.png</texture>
 							<visible>StringCompare(ListItem.Director,checked)</visible>
 						</control>
 						<control type="image">
@@ -561,7 +542,7 @@
 							<posy>14</posy>
 							<width>12</width>
 							<height>12</height>
-							<texture border="2">form-checkbox-unchecked.png</texture>
+							<texture border="2">webviewer-form-checkbox-unchecked.png</texture>
 							<visible>StringCompare(ListItem.Director,unchecked)</visible>
 						</control>
 						<control type="label">
@@ -600,7 +581,7 @@
 							<posy>2</posy>
 							<width>218</width>
 							<height>38</height>
-							<texture border="2">form-text.png</texture>
+							<texture border="2">webviewer-form-text.png</texture>
 						</control>
 						<control type="label">
 							<posx>193</posx>
@@ -626,7 +607,7 @@
 							<posy>2</posy>
 							<width>294</width>
 							<height>38</height>
-							<texture border="2">form-text.png</texture>
+							<texture border="2">webviewer-form-text.png</texture>
 						</control>
 						<control type="label">
 							<posx>10</posx>
@@ -646,7 +627,7 @@
 							<posy>2</posy>
 							<width>90</width>
 							<height>38</height>
-							<texture border="2">form-submit.png</texture>
+							<texture border="2">webviewer-form-submit.png</texture>
 						</control>
 						<control type="label">
 							<posx>345</posx>
@@ -672,7 +653,7 @@
 							<posy>2</posy>
 							<width>360</width>
 							<height>38</height>
-							<texture border="2">form-select.png</texture>
+							<texture border="2">webviewer-form-select.png</texture>
 						</control>
 						<control type="image">
 							<description>select input button</description>
@@ -680,7 +661,7 @@
 							<posy>4</posy>
 							<width>29</width>
 							<height>35</height>
-							<texture border="2">form-select-button.png</texture>
+							<texture border="2">webviewer-form-select-button.png</texture>
 						</control>
 						<control type="label">
 							<posx>190</posx>
@@ -706,7 +687,7 @@
 							<posy>2</posy>
 							<width>360</width>
 							<height>38</height>
-							<texture border="2">form-submit.png</texture>
+							<texture border="2">webviewer-form-submit.png</texture>
 						</control>
 						<control type="label">
 							<posx>200</posx>
@@ -729,7 +710,7 @@
 						<posy>0</posy>
 						<width>400</width>
 						<height>44</height>
-						<texture border="2">form-control-focus-box.png</texture>
+						<texture border="2">webviewer-form-control-focus-box.png</texture>
 					</control>
 					<!-- LABEL -->
 					<control type="label">
@@ -756,7 +737,7 @@
 							<posy>14</posy>
 							<width>12</width>
 							<height>12</height>
-							<texture border="2">form-checkbox-checked.png</texture>
+							<texture border="2">webviewer-form-checkbox-checked.png</texture>
 							<visible>StringCompare(ListItem.Director,checked)</visible>
 						</control>
 						<control type="image">
@@ -765,7 +746,7 @@
 							<posy>14</posy>
 							<width>12</width>
 							<height>12</height>
-							<texture border="2">form-checkbox-unchecked.png</texture>
+							<texture border="2">webviewer-form-checkbox-unchecked.png</texture>
 							<visible>StringCompare(ListItem.Director,unchecked)</visible>
 						</control>
 						<control type="label">
@@ -804,7 +785,7 @@
 							<posy>2</posy>
 							<width>218</width>
 							<height>38</height>
-							<texture border="2">form-text.png</texture>
+							<texture border="2">webviewer-form-text.png</texture>
 						</control>
 						<control type="label">
 							<posx>193</posx>
@@ -830,7 +811,7 @@
 							<posy>2</posy>
 							<width>294</width>
 							<height>38</height>
-							<texture border="2">form-text.png</texture>
+							<texture border="2">webviewer-form-text.png</texture>
 						</control>
 						<control type="label">
 							<posx>10</posx>
@@ -850,7 +831,7 @@
 							<posy>2</posy>
 							<width>90</width>
 							<height>38</height>
-							<texture border="2">form-submit.png</texture>
+							<texture border="2">webviewer-form-submit.png</texture>
 						</control>
 						<control type="label">
 							<posx>345</posx>
@@ -876,7 +857,7 @@
 							<posy>2</posy>
 							<width>360</width>
 							<height>38</height>
-							<texture border="2">form-select.png</texture>
+							<texture border="2">webviewer-form-select.png</texture>
 						</control>
 						<control type="image">
 							<description>select input button</description>
@@ -884,7 +865,7 @@
 							<posy>4</posy>
 							<width>29</width>
 							<height>35</height>
-							<texture border="2">form-select-button.png</texture>
+							<texture border="2">webviewer-form-select-button.png</texture>
 						</control>
 						<control type="label">
 							<posx>190</posx>
@@ -910,7 +891,7 @@
 							<posy>2</posy>
 							<width>360</width>
 							<height>38</height>
-							<texture border="2">form-submit.png</texture>
+							<texture border="2">webviewer-form-submit.png</texture>
 						</control>
 						<control type="label">
 							<posx>200</posx>
@@ -936,12 +917,9 @@
 					<posy>0</posy>
 					<width>12</width>
 					<height>570</height>
-					<texturesliderbackground border="6">default-scroll_back.png
-					</texturesliderbackground>
-					<texturesliderbar border="6">default-scroll_mid.png
-					</texturesliderbar>
-					<texturesliderbarfocus border="6">default-scroll_mid.png
-					</texturesliderbarfocus>
+					<texturesliderbackground border="6">webviewer-default-scroll_back.png</texturesliderbackground>
+					<texturesliderbar border="6">webviewer-default-scroll_mid.png</texturesliderbar>
+					<texturesliderbarfocus border="6">webviewer-default-scroll_mid.png</texturesliderbarfocus>
 					<textureslidernib>-</textureslidernib>
 					<textureslidernibfocus>-</textureslidernibfocus>
 					<orientation>vertical</orientation>
