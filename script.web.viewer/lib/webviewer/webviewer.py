@@ -1839,7 +1839,27 @@ def doKeyboard(prompt,default='',hidden=False):
 	if not keyboard.isConfirmed(): return None
 	return keyboard.getText()
 
+################################################################################
+# getWebResult
+################################################################################
 def getWebResult(url,autoForms=[],dialog=False):
+	"""Open a url and get the result
+	
+	url, html = webviewer.getWebResult(url,autoForms=[],dialog=False)
+
+	This returns the url and html of the page when the browser was closed.
+	
+	The autoforms parameter is for auto selecting forms and is a list of dicts as follows:
+	
+	{ 'name': 'exact name of form',
+	  'action': 'a substring of the form action',
+	  'index': 'index of the form in the html' }
+	
+	A match will occur if any of the items in the dict matches.
+	
+	Setting the dialog parameter to true will cause the browser to open as a dialog instead as a normal window.
+	
+	"""
 	if dialog:
 		w = ViewerWindowDialog("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME,url=url,autoForms=autoForms)
 	else:
