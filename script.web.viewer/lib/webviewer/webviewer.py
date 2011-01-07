@@ -7,7 +7,7 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '12-12-2010'
-__version__ = '0.7.2'
+__version__ = '0.7.3'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
@@ -998,7 +998,6 @@ class ViewerWindow(BaseWindow):
 		for i in range(pos*-1,1):
 			i = abs(i)
 			item = self.pageList.getListItem(i)
-			#line = item.text.split('[CR]',1)[0]
 			if item.displayLen < self.CHAR_PER_LINE:
 				ct += 1
 			else:
@@ -1015,7 +1014,6 @@ class ViewerWindow(BaseWindow):
 		ct = 0
 		for i in range(pos,max):
 			item = self.pageList.getListItem(i)
-			#line = item.text.split('[CR]',1)[0]
 			if item.displayLen < self.CHAR_PER_LINE:
 				ct += 1
 			else:
@@ -1029,6 +1027,21 @@ class ViewerWindow(BaseWindow):
 		self.pageList.selectItem(i)
 		self.refreshFocus()
 		
+	def calculateLines(self,pos,max):
+		ct = 0
+		toppos = -1
+		for i in range(max * -1,(pos * -1) + 1):
+			i = abs(i)
+			item = self.pageList.getListItem(i)
+			if item.displayLen < self.CHAR_PER_LINE:
+				ct += 1
+			else:
+				ct += (item.displayLen / self.CHAR_PER_LINE) + 1
+			if ct < self.LINE_COUNT:
+				toppos = i
+		if toppos < -1: toppos = -1
+		return ct,toppos
+	
 	def refreshFocus(self):
 		xbmc.executebuiltin('ACTION(highlight)')
 	
@@ -1051,12 +1064,23 @@ class ViewerWindow(BaseWindow):
 				xbmcgui.unlock()
 				return
 			itemIndex = self.pageList.getSelectedPosition()
-			if itemIndex != element.lineNumber:
-				#index = self.currentElementIndex
-				self.lastPos = element.lineNumber
-				self.pageList.selectItem(element.lineNumber)
-				#self.currentElementIndex = index
 			item = self.pageList.getListItem(element.lineNumber)
+			curr = self.pageList.currentItem()
+			offset = element.displayPageIndex - curr.index
+			lines,top = self.calculateLines(itemIndex, element.lineNumber)
+			#print 'test %s %s' % (lines,top)
+			if offset >=0 and lines < self.LINE_COUNT:
+				item = curr				
+			else:
+				linenum = element.lineNumber
+				if top > -1: linenum = top
+				if itemIndex != linenum:
+					#index = self.currentElementIndex
+					self.lastPos = linenum
+					self.pageList.selectItem(linenum)
+					item = self.pageList.currentItem()
+					#self.currentElementIndex = index
+			
 			disp = item.text
 			index = element.displayPageIndex - item.index
 			#print self.currentElementIndex
@@ -1081,7 +1105,7 @@ class ViewerWindow(BaseWindow):
 		try:
 			xbmcgui.lock()
 			if element.type == PE_LINK:
-				self.linkList.selectItem(element.typeIndex)
+				if self.linkList.getSelectedPosition() != element.typeIndex: self.linkList.selectItem(element.typeIndex)
 				self.controlList.setVisible(False)
 				self.imageList.setVisible(False)
 				self.linkList.setVisible(True)
