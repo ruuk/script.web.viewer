@@ -1,6 +1,14 @@
 Forum Browser Changelog
 
-Current Version : 0.7.3
+Current Version : 0.7.4
+
+*** 0.7.4 ***
+
+Added 'Submit' button to forms without it
+Added settings option to disable this behaviour
+Improved handling of forms labels and some other tags
+getWebResult(): Modified autoForms - index must match if specified
+getWebResult(): Added autoClose parameter 
 
 *** 0.7.3 ***
 

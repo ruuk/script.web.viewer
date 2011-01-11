@@ -29,12 +29,12 @@ class HTMLConverter:
 		self.formReplace = '[CR][COLOR '+self.formColorA+']______________________________[/COLOR][CR][COLOR '+self.formColorB+'][B]- FORM: %s -[/B][/COLOR][CR]%s[CR][COLOR '+self.formColorC+']______________________________[/COLOR][CR][CR]'
 		self.submitReplace = '[\g<value>] '
 		#static filters
-		self.linkFilter = re.compile('<a[^>]+?href="(?P<url>[^>"]+?)"[^>]*?(?:title="(?P<title>[^>"]+?)"[^>]*?)?>(?P<text>.*?)</a>',re.I)
-		self.imageFilter = re.compile('<img[^>]+?src="(?P<url>(?:http://)?[^>"]+?)"[^>]*?/>',re.I)
+		self.linkFilter = re.compile('<a[^>]+?href=["\'](?P<url>[^>"]+?)["\'][^>]*?(?:title=["\'](?P<title>[^>"]+?)["\'][^>]*?)?>(?P<text>.*?)</a>',re.I)
+		self.imageFilter = re.compile('<img[^>]+?src=["\'](?P<url>(?:http://)?[^>"]+?)["\'][^>]*?/>',re.I)
 		self.scriptFilter = re.compile('<script[^>]*?>.*?</script>',re.S|re.I)
 		self.styleFilter = re.compile('<style[^>]*?>.+?</style>',re.I)
 		self.commentFilter = re.compile('<!--.*?-->')
-		self.formFilter = re.compile('<form[^>]*?(?:id="(?P<id>[^>"]+?)"[^>]*?)?>(?P<contents>.+?)(?:</form>|<form>|$)',re.I)
+		self.formFilter = re.compile('<form[^>]*?(?:id=["\'](?P<id>[^>"]+?)["\'][^>]*?)?>(?P<contents>.+?)(?:</form>|<form>|$)',re.I)
 		self.labelFilter = re.compile('<label[^>]*?(?:(?:for=["\'])|(?:>\s*<input[^>]*?id="))(?P<inputid>[^>"].*?)["\'][^>]*?>(?P<label>.*?)</label>',re.I)
 		self.altLabelFilter = re.compile('>(?:(?P<header>[^<>]*?)<(?!input|select)\w+[^>]*?>)?(?P<label>[^<>]+?)(?:<(?!input|select)\w+[^>]*?>)?(?:<input |<select )[^>]*?(?:id|name)="(?P<inputid>[^>"]+?)"',re.I)
 		self.submitFilter = re.compile('<input type=["\']submit["\'][^>]+?value=["\'](?P<value>[^>"\']+?)["\'][^>]*?>',re.I)
