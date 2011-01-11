@@ -130,7 +130,15 @@ class WebReader:
 	
 	def readURL(self,url,callback):
 		if not callback(5,__language__(30103)): return None
-		response = self.browser.open(url)
+		response = None
+		try:
+			response = self.browser.open(url)
+		except Exception,e:
+			#If we have a redirect loop, this is a same url cookie issue. Just use the response in the error.
+			if 'redirect' in str(e) and 'infinite loop' in str(e):
+				response = e
+			else:
+				raise
 		content = response.info().get('content-type','')
 		contentDisp = response.info().get('content-disposition','')
 		#print response.info()
@@ -413,18 +421,45 @@ class WebPage:
 				self._labels[k] = self._labels[k][:-1]
 		return self._labels, self._headers
 	
-	def getForm(self,name=None,action=None,index=None):
+	def getForm(self,url=None,name=None,action=None,index=None):
+		if url:
+			if not re.match(url,self.url): return None
+			print 'URL MATCH: %s' % self.url
 		if name:
+			idx=0
 			for f in self.forms:
-				if name == f.form.name: return f
+				if name == f.form.name:
+					if index != None:
+						if index != idx: continue
+					return f
+				idx+=1
 		if action:
+			idx=0
 			for f in self.forms:
-				if action in f.form.action: return f
+				if action in f.form.action:
+					print 'ACTION MATCH: %s' % action
+					if index != None:
+						if index != idx:
+							print 'WRONG INDEX: %s instead of %s' % (idx,index)
+							idx+=1
+							continue
+					return f
+				idx+=1
 		if index:
 			ct = 0
 			for f in self.forms:
 				if ct == index: return f
 		return None
+	
+	def matches(self,url_regex=None,html_regex=None):
+		if not url_regex and not html_regex: return False
+		if url_regex and not re.match(url_regex,self.url):
+			print 'AUTOCLOSE: NO URL MATCH'
+			return False
+		if html_regex and not re.match(html_regex,self.html):
+			print 'AUTOCLOSE: NO HTML MATCH'
+			return False
+		return True
 	
 	def getTitle(self):
 		return self.title or self.url
@@ -862,6 +897,7 @@ class ViewerWindow(BaseWindow):
 	def __init__( self, *args, **kwargs):
 		self.url = kwargs.get('url')
 		self.autoForms = kwargs.get('autoForms',[])
+		self.autoClose = kwargs.get('autoClose')
 		
 		self.first = True
 		
@@ -974,7 +1010,7 @@ class ViewerWindow(BaseWindow):
 				elif xbmcgui.Dialog().yesno(__language__(30113),__language__(30114),page.getFileName(),__language__(30115) % page.content):
 					self.downloadLink(page.url,page.getFileName())
 			self.endProgress()
-			self.getControl(104).setLabel(self.page.title or self.page.url)
+			if self.page: self.getControl(104).setLabel(self.page.title or self.page.url)
 			return
 		self.selected = None
 		self.lastPos = 0
@@ -1144,6 +1180,7 @@ class ViewerWindow(BaseWindow):
 		idx = 0
 		trail = False
 		notrail = True
+		hasSubmit = False
 		for c in form.controls:
 			if c.type != 'hidden':
 				label = labels.get(c.id) or labels.get(c.name) or c.name or c.type.title()
@@ -1175,6 +1212,7 @@ class ViewerWindow(BaseWindow):
 						trail = True
 						self.controlList.addItem(xbmcgui.ListItem())
 				elif c.type == 'submit' or c.type == 'image':
+					hasSubmit = True
 					a = c.attrs
 					#value = a.get('title','')
 					item = xbmcgui.ListItem(label=a.get('alt') or c.value or label)
@@ -1220,6 +1258,11 @@ class ViewerWindow(BaseWindow):
 					item.setProperty('index',str(idx))
 					self.controlList.addItem(item)
 			idx+=1
+		if not hasSubmit and __addon__.getSetting('add_missing_submit') == 'true':
+			item = xbmcgui.ListItem(label=__language__(30147))
+			item.setInfo('video',{'Genre':'submit'})
+			item.setProperty('index',str(idx))
+			self.controlList.addItem(item)
 	
 	def getFormControl(self,item):
 		idx = item.getProperty('index')
@@ -1229,6 +1272,10 @@ class ViewerWindow(BaseWindow):
 			print 'error',idx
 			return None
 		if idx < 0: return None
+		if idx >= len(self.form.controls):
+			class fake(object):
+				type = 'missing_submit'
+			return fake
 		return self.form.controls[idx]
 			
 	def doControl(self):
@@ -1263,6 +1310,9 @@ class ViewerWindow(BaseWindow):
 				self.doSelect(control,item)
 		elif ctype == 'submit' or ctype == 'image':
 			self.submitForm(control)
+			return
+		elif ctype == 'missing_submit':
+			self.submitForm(None)
 			return
 		elif ctype == 'file':
 			fname = xbmcgui.Dialog().browse(1,__language__(30117),'files')
@@ -1336,14 +1386,20 @@ class ViewerWindow(BaseWindow):
 		
 		self.selectionChanged(self.pageList.getSelectedPosition(), -1)
 		for fd in self.autoForms:
-			f = self.page.getForm(name=fd.get('name'),action=fd.get('action'),index=fd.get('index'))
+			f = self.page.getForm(url=fd.get('url'),name=fd.get('name'),action=fd.get('action'),index=fd.get('index'))
 			if f:
 				self.selectElement(f)
+				self.setFocusId(122)
+				xbmc.sleep(500)
 				xbmc.executebuiltin('ACTION(select)')
-				#self.setFocus(self.controlList)
 				#self.showForm(f.form)
 				break
-		
+		if self.autoClose:
+			if self.page.matches(self.autoClose.get('url'),self.autoClose.get('html')):
+				self.doAutoClose(self.autoClose.get('heading'),self.autoClose.get('message'))
+				
+	def doAutoClose(self,heading,message):
+		if xbmcgui.Dialog().yesno(heading,message,__language__(30148)): self.close()
 		
 	def getLinks(self):
 		ulist = self.getControl(148)
@@ -1842,7 +1898,7 @@ def doKeyboard(prompt,default='',hidden=False):
 ################################################################################
 # getWebResult
 ################################################################################
-def getWebResult(url,autoForms=[],dialog=False):
+def getWebResult(url,autoForms=[],autoClose=None,dialog=False):
 	"""Open a url and get the result
 	
 	url, html = webviewer.getWebResult(url,autoForms=[],dialog=False)
@@ -1855,18 +1911,34 @@ def getWebResult(url,autoForms=[],dialog=False):
 	  'action': 'a substring of the form action',
 	  'index': 'index of the form in the html' }
 	
-	A match will occur if any of the items in the dict matches.
+	A match will occur if any of the items in the dict matches,
+	except if name or action matches and index is defined, the index must also match.
 	
+	The autoClose parameter is for matching a page where the window should close.
+	If matched it will present a dialog asking to close with the provided heading and message.
+	It is a dict as follows:
+	
+	{ 'url': 'regex to match against page url',
+	  'html': 'regex to match against page html',
+	  'heading': 'heading for dialog',
+	  'message': 'message for dialog' }
+	  
+	You can specify url, html, or both. A match will only occur if all provided regular expressions match.
+	  
 	Setting the dialog parameter to true will cause the browser to open as a dialog instead as a normal window.
 	
 	"""
 	if dialog:
-		w = ViewerWindowDialog("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME,url=url,autoForms=autoForms)
+		w = ViewerWindowDialog("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME,url=url,autoForms=autoForms,autoClose=autoClose)
 	else:
-		w = ViewerWindowNormal("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME,url=url,autoForms=autoForms)
+		w = ViewerWindowNormal("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME,url=url,autoForms=autoForms,autoClose=autoClose)
 	w.doModal()
-	url = w.page.url
-	html = w.page.html
+	if w.page:
+		url = w.page.url
+		html = w.page.html
+	else:
+		url = None
+		html = None
 	del w
 	return url,html
 	

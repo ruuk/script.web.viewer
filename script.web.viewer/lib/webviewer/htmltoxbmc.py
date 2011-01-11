@@ -7,6 +7,7 @@ Handle Nested Lists
 '''
 class HTMLConverter:
 	def __init__(self):
+		self.ordered = False
 		self.bullet = unichr(8226)
 		self.tdSeperator = ' %s ' % self.bullet
 		
@@ -34,7 +35,7 @@ class HTMLConverter:
 		self.styleFilter = re.compile('<style[^>]*?>.+?</style>',re.I)
 		self.commentFilter = re.compile('<!--.*?-->')
 		self.formFilter = re.compile('<form[^>]*?(?:id="(?P<id>[^>"]+?)"[^>]*?)?>(?P<contents>.+?)(?:</form>|<form>|$)',re.I)
-		self.labelFilter = re.compile('<label[^>]*?(?:(?:for=")|(?:>\s*<input[^>]*?id="))(?P<inputid>[^>"].*?)"[^>]*?>(?P<label>.*?)</label>',re.I)
+		self.labelFilter = re.compile('<label[^>]*?(?:(?:for=["\'])|(?:>\s*<input[^>]*?id="))(?P<inputid>[^>"].*?)["\'][^>]*?>(?P<label>.*?)</label>',re.I)
 		self.altLabelFilter = re.compile('>(?:(?P<header>[^<>]*?)<(?!input|select)\w+[^>]*?>)?(?P<label>[^<>]+?)(?:<(?!input|select)\w+[^>]*?>)?(?:<input |<select )[^>]*?(?:id|name)="(?P<inputid>[^>"]+?)"',re.I)
 		self.submitFilter = re.compile('<input type=["\']submit["\'][^>]+?value=["\'](?P<value>[^>"\']+?)["\'][^>]*?>',re.I)
 		self.lineItemFilter = re.compile('<(li|/li|ul|ol|/ul|/ol)[^>]*?>',re.I)
