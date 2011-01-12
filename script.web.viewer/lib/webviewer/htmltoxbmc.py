@@ -3,7 +3,6 @@ import htmlentitydefs
 
 '''
 TODO:
-Handle Nested Lists
 '''
 class HTMLConverter:
 	def __init__(self):
@@ -49,7 +48,8 @@ class HTMLConverter:
 		interTagWSString = '(%s)\s*(%s)' % (self.tagString,self.tagString)
 		self.tagFilter = re.compile(self.tagString,re.S|re.I)
 		self.interTagWSFilter = re.compile(interTagWSString,re.I)
-		self.lineFilter = re.compile('[\n\r\t]')
+		self.lineFilter = re.compile('[\n\r]')
+		self.tabFilter = re.compile('\t')
 		self.titleFilter = re.compile('<title>(.+?)</title>',re.I)
 		self.bodyFilter = re.compile('<body[^>]*?>(.+)</body>',re.S|re.I)
 		self.frameFilter = re.compile('<i?frame[^>]*?src="(?P<url>[^>"]+?)"[^>]*?>(?:.*?</iframe>)?',re.I)
@@ -78,6 +78,9 @@ class HTMLConverter:
 		self.leadingTrailingWSFilter = re.compile('\s*([\n\r])\s*')
 		self.lineReduceFilter = re.compile('\n+')
 		
+		self.eolWhitspaceFilter = re.compile('\s+(?=\[CR\])',re.U)
+		self.lessEolFilter = re.compile('(?:\[CR\]){2,}')
+		
 	def htmlToDisplay(self,html):
 		if not html: return 'NO PAGE','NO PAGE'
 		html = unicode(html,'utf8','replace')
@@ -90,6 +93,7 @@ class HTMLConverter:
 		
 		self.imageCount = 0
 		self.imageDict = {}
+		
 		html = self.linkFilter.sub(self.linkConvert,html)
 		html = self.imageFilter.sub(self.imageConvert,html)
 		html = self.formFilter.sub(self.formConvert,html)
@@ -120,15 +124,17 @@ class HTMLConverter:
 		html = html.replace('</tr>','[CR][CR]')
 		html = html.replace('</td><td>',self.tdSeperator)
 		html = self.tagFilter.sub('',html)
-		#print self.tagFilter.findall(html)
-		#print 'Test: %s' % len(html.split('[COLOR %s]' % self.linkColor))
 		html = self.removeNested(html,'\[/?B\]','[B]')
 		html = self.removeNested(html,'\[/?I\]','[I]')
-		#html = re.sub('(?:\[CR\]){2,}','[CR][CR]',html) #to get rid of excessive new lines
-		html = html.replace('[CR]','\n').strip().replace('\n','[CR]') #TODO Make this unnecessary
+		html = html.replace('[CR]','\n').strip().replace('\n','[CR]') #TODO: Make this unnecessary
+		
+		html = self.convertHTMLCodes(html)
+		html = self.eolWhitspaceFilter.sub('',html)
+		html = self.lessEolFilter.sub('[CR][CR]',html)
 		#import codecs
 		#codecs.open('/home/ruuk/test.txt','w',encoding='utf-8').write(html)
-		return self.convertHTMLCodes(html),self.convertHTMLCodes(title)
+		
+		return html,self.convertHTMLCodes(title)
 	
 	def cleanHTML(self,html):
 		try:
@@ -138,7 +144,7 @@ class HTMLConverter:
 			#print 'ERROR - Could not parse <body> contents'
 			print 'ERROR - Could not find </head> tag'
 		#html = self.lineFilter.sub(' ',html)
-		
+		html = self.tabFilter.sub('',html)
 		#remove leading and trailing whitespace 
 		html = self.leadingTrailingWSFilter.sub(r'\1',html)
 		

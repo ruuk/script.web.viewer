@@ -1181,6 +1181,7 @@ class ViewerWindow(BaseWindow):
 		trail = False
 		notrail = True
 		hasSubmit = False
+		
 		for c in form.controls:
 			if c.type != 'hidden':
 				label = labels.get(c.id) or labels.get(c.name) or c.name or c.type.title()
@@ -1221,7 +1222,7 @@ class ViewerWindow(BaseWindow):
 					self.controlList.addItem(item)
 				elif c.type == 'text' or c.type == 'password' or c.type == 'textarea':
 					a = c.attrs
-					label = labels.get(c.id) or labels.get(c.name) or a.get('title') or a.get('value') or a.get('type')
+					label = labels.get(c.id) or labels.get(c.name) or a.get('title') or a.get('value') or a.get('type') or ''
 					if c.type == 'password':
 						value = '*' * len(c.value or '')
 					else:
@@ -1411,7 +1412,7 @@ class ViewerWindow(BaseWindow):
 			elif link.image:
 				item.setIconImage(link.image)
 			else:
-				item.setIconImage('link.png')
+				item.setIconImage('webviewer-link.png')
 			ulist.addItem(item)
 
 	def getImages(self):
@@ -1901,7 +1902,7 @@ def doKeyboard(prompt,default='',hidden=False):
 def getWebResult(url,autoForms=[],autoClose=None,dialog=False):
 	"""Open a url and get the result
 	
-	url, html = webviewer.getWebResult(url,autoForms=[],dialog=False)
+	url, html = webviewer.getWebResult(url,autoForms=[],autoClose=None,dialog=False)
 
 	This returns the url and html of the page when the browser was closed.
 	
