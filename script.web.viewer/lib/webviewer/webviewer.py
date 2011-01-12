@@ -258,6 +258,7 @@ class WebPage:
 		self._links = []
 		self._images = []
 		self._frames = []
+		self._cleanHTML = ''
 		self.elements = []
 		ct = 0
 		for f in forms:
@@ -344,11 +345,16 @@ class WebPage:
 		self.imageUrls()
 		return self._imageCount()
 	
+	def cleanHTML(self):
+		if self._cleanHTML: return self._cleanHTML
+		self._cleanHTML = HC.cleanHTML(self.html)
+		return self._cleanHTML
+
 	def images(self):
 		if self._images: return self._images
 		self.getImageURLDict()
 		ct=0
-		for url in HC.imageFilter.findall(HC.linkFilter.sub('',self.html),re.S):
+		for url in HC.imageFilter.findall(HC.linkFilter.sub('',self.cleanHTML()),re.S):
 			shortIndex = self.imageURLDict.get(url)
 			self._images.append(Image(url,ct,shortIndex,base_url=self.url))
 			ct+=1
@@ -357,7 +363,7 @@ class WebPage:
 	def imageURLs(self):
 		urls = []
 		ct = 0
-		for url in HC.imageFilter.findall(HC.linkFilter.sub('',self.html),re.S):
+		for url in HC.imageFilter.findall(HC.linkFilter.sub('',self.cleanHTML()),re.S):
 			for u in urls:
 				if u == url: break
 			else:
@@ -370,7 +376,7 @@ class WebPage:
 		if self.imageURLDict: return self.imageURLDict
 		urls = []
 		ct=0
-		for url in HC.imageFilter.findall(HC.linkFilter.sub('',self.html),re.S):
+		for url in HC.imageFilter.findall(HC.linkFilter.sub('',self.cleanHTML()),re.S):
 			urls.append(url)
 			if not url in self.imageURLDict:
 				self.imageURLDict[url] = ct
@@ -378,11 +384,12 @@ class WebPage:
 		return self.imageURLDict
 		
 	def linkImageURLs(self):
-		return re.findall('<a.+?href="(http://.+?\.(?:jpg|png|gif|bmp))".+?</a>',self.html,re.S)
+		#TODO: UNUSED - Remove
+		return re.findall('<a.+?href="(http://.+?\.(?:jpg|png|gif|bmp))".+?</a>',self.cleanHTML(),re.S)
 		
 	def linkURLs(self):
-		html = unicode(self.html,'utf8','replace')
-		return HC.linkFilter.finditer(HC.cleanHTML(html))
+		html = unicode(self.cleanHTML(),'utf8','replace')
+		return HC.linkFilter.finditer(html)
 		
 	def links(self):
 		if self._links: return self._links
@@ -393,8 +400,8 @@ class WebPage:
 		return self._links
 	
 	def frameMatches(self):
-		html = unicode(self.html,'utf8','replace')
-		return HC.frameFilter.finditer(HC.cleanHTML(html))
+		html = unicode(self.cleanHTML(),'utf8','replace')
+		return HC.frameFilter.finditer(html)
 	
 	def frames(self):
 		if self._frames: return self._frames
@@ -901,7 +908,7 @@ class ViewerWindow(BaseWindow):
 		
 		self.first = True
 		
-		self.imageReplace = 'IMG #%s'
+		self.imageReplace = 'IMG #%s: %s'
 		self.page = None
 		self.history = URLHistory(HistoryLocation(self.url))
 		self.line = 0
@@ -1181,7 +1188,7 @@ class ViewerWindow(BaseWindow):
 		trail = False
 		notrail = True
 		hasSubmit = False
-		
+		hasControl = False
 		for c in form.controls:
 			if c.type != 'hidden':
 				label = labels.get(c.id) or labels.get(c.name) or c.name or c.type.title()
@@ -1212,6 +1219,7 @@ class ViewerWindow(BaseWindow):
 					if len(c.items) > 1:
 						trail = True
 						self.controlList.addItem(xbmcgui.ListItem())
+					hasControl = True
 				elif c.type == 'submit' or c.type == 'image':
 					hasSubmit = True
 					a = c.attrs
@@ -1220,6 +1228,7 @@ class ViewerWindow(BaseWindow):
 					item.setInfo('video',{'Genre':'submit'})
 					item.setProperty('index',str(idx))
 					self.controlList.addItem(item)
+					hasControl = True
 				elif c.type == 'text' or c.type == 'password' or c.type == 'textarea':
 					a = c.attrs
 					label = labels.get(c.id) or labels.get(c.name) or a.get('title') or a.get('value') or a.get('type') or ''
@@ -1232,6 +1241,7 @@ class ViewerWindow(BaseWindow):
 					item.setInfo('video',{'Genre':'text'})
 					item.setProperty('index',str(idx))
 					self.controlList.addItem(item)
+					hasControl = True
 				elif c.type == 'select':
 					pre = labels.get(c.id,labels.get(c.name,''))
 					if pre: self.addLabel(pre)
@@ -1245,6 +1255,7 @@ class ViewerWindow(BaseWindow):
 					item.setInfo('video',{'Genre':'select'})
 					item.setProperty('index',str(idx))
 					self.controlList.addItem(item)
+					hasControl = True
 				elif c.type == 'file':
 					if label: self.addLabel(label)
 					label = ''
@@ -1258,8 +1269,11 @@ class ViewerWindow(BaseWindow):
 					item.setInfo('video',{'Genre':'file'})
 					item.setProperty('index',str(idx))
 					self.controlList.addItem(item)
+					hasControl = True
 			idx+=1
-		if not hasSubmit and __addon__.getSetting('add_missing_submit') == 'true':
+		if not hasControl:
+			self.addLabel('Empty Form')
+		if not hasSubmit and hasControl and __addon__.getSetting('add_missing_submit') == 'true':
 			item = xbmcgui.ListItem(label=__language__(30147))
 			item.setInfo('video',{'Genre':'submit'})
 			item.setProperty('index',str(idx))
@@ -1421,7 +1435,7 @@ class ViewerWindow(BaseWindow):
 		for url in self.page.imageURLs():
 			url = fullURL(self.url,url)
 			i+=1
-			item = xbmcgui.ListItem(self.imageReplace % i,iconImage=url)
+			item = xbmcgui.ListItem(self.imageReplace % (i,url),iconImage=url)
 			item.setProperty('url',url)
 			self.getControl(150).addItem(item)
 			

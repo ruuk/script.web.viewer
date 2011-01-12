@@ -28,8 +28,8 @@ class HTMLConverter:
 		self.formReplace = '[CR][COLOR '+self.formColorA+']______________________________[/COLOR][CR][COLOR '+self.formColorB+'][B]- FORM: %s -[/B][/COLOR][CR]%s[CR][COLOR '+self.formColorC+']______________________________[/COLOR][CR][CR]'
 		self.submitReplace = '[\g<value>] '
 		#static filters
-		self.linkFilter = re.compile('<a[^>]+?href=["\'](?P<url>[^>"]+?)["\'][^>]*?(?:title=["\'](?P<title>[^>"]+?)["\'][^>]*?)?>(?P<text>.*?)</a>',re.I)
-		self.imageFilter = re.compile('<img[^>]+?src=["\'](?P<url>(?:http://)?[^>"]+?)["\'][^>]*?/>',re.I)
+		self.linkFilter = re.compile('<a[^>]+?href=["\'](?P<url>[^>"]+?)["\'][^>]*?(?:title=["\'](?P<title>[^>"]+?)["\'][^>]*?)?>(?P<text>.*?)</a>',re.I|re.S|re.U)
+		self.imageFilter = re.compile('<img[^>]+?src=["\'](?P<url>[^>"]+?)["\'][^>]*?>',re.I|re.S|re.U)
 		self.scriptFilter = re.compile('<script[^>]*?>.*?</script>',re.S|re.I)
 		self.styleFilter = re.compile('<style[^>]*?>.+?</style>',re.I)
 		self.commentFilter = re.compile('<!--.*?-->')
@@ -83,7 +83,7 @@ class HTMLConverter:
 		
 	def htmlToDisplay(self,html):
 		if not html: return 'NO PAGE','NO PAGE'
-		html = unicode(html,'utf8','replace')
+		if type(html) != type(u''): html = unicode(html,'utf8','replace')
 		try:
 			title = self.titleFilter.search(html).group(1)
 		except:
@@ -180,6 +180,7 @@ class HTMLConverter:
 		return self.formReplace % (m.group('id'),m.group('contents'))
 	
 	def htmlToDisplayWithIDs(self,html):
+		html = unicode(html,'utf8','replace')
 		html = self.idFilter.sub(r'\g<0>[{\g<1>}]',html)
 		return self.htmlToDisplay(html)
 
