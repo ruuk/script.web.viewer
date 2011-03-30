@@ -4,6 +4,7 @@ Current Version : 0.7.8
 
 *** 0.7.8 ***
 
+New icon courtesy of freezy
 Added autofill option for autoforms
 Added autosubmit option for autoforms
 

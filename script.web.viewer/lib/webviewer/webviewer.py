@@ -9,7 +9,7 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-12-2011'
-__version__ = '0.7.7'
+__version__ = '0.7.8'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
@@ -2097,11 +2097,14 @@ def getWebResult(url, autoForms=[], autoClose=None, dialog=False, runFromSubDir=
 	
 	"""
 	if runFromSubDir: __addon__.setAddonPath(runFromSubDir)
-		
+	apath = xbmc.translatePath(__addon__.getAddonInfo('path'))
+	if not os.path.exists(os.path.join(apath,'resources','skins','Default','720p','script-webviewer-page.xml')):
+		apath = 'Q:\\scripts\\.modules\\script.web.viewer\\' #for XBMC4Xbox when used as a module
+	
 	if dialog:
-		w = ViewerWindowDialog("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME, url=url, autoForms=autoForms, autoClose=autoClose)
+		w = ViewerWindowDialog("script-webviewer-page.xml" , apath, THEME, url=url, autoForms=autoForms, autoClose=autoClose)
 	else:
-		w = ViewerWindowNormal("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME, url=url, autoForms=autoForms, autoClose=autoClose)
+		w = ViewerWindowNormal("script-webviewer-page.xml" , apath, THEME, url=url, autoForms=autoForms, autoClose=autoClose)
 	w.doModal()
 	if w.page:
 		url = w.page.url
@@ -2126,8 +2129,15 @@ if __name__ == '__main__':
 	#start_url = 'http://www.tizag.com/phpT/examples/formex.php'
 	#start_url = 'http://forum.xbmc.org'
 	#start_url='http://www.cs.tut.fi/~jkorpela/forms/file.html'
-	start_url = getHome() or 'http://wiki.xbmc.org/index.php?title=XBMC_Online_Manual'
-	w = ViewerWindowNormal("script-webviewer-page.xml" , __addon__.getAddonInfo('path'), THEME, url=start_url)
+	start_url = ''
+	try: start_url = sys.argv[0]
+	except: pass
+	
+	if not start_url: start_url = getHome() or 'http://wiki.xbmc.org/index.php?title=XBMC_Online_Manual'
+	apath = xbmc.translatePath(__addon__.getAddonInfo('path'))
+	if not os.path.exists(os.path.join(apath,'resources','skins','Default','720p','script-webviewer-page.xml')):
+		apath = 'Q:\\scripts\\.modules\\script.web.viewer\\' #for XBMC4Xbox when used as a module
+	w = ViewerWindowNormal("script-webviewer-page.xml" , apath, THEME, url=start_url)
 	w.doModal()
 	del w
 	sys.modules.clear()
