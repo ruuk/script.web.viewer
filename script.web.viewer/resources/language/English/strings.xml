@@ -4,7 +4,7 @@
     <string id="30000">General</string>
     <string id="30001">Add Submit Button If Missing</string>
     <string id="30002">Goto URL option edits current URL</string>
-    <string id="30003">Use Simple Controls (ie Boxee)</string>
+    <string id="30003">Simple Controls (ie ATV2, Boxee)</string>
     
     <string id="30100">Error loading page.</string>
     <string id="30101">Processing Data</string>
@@ -73,5 +73,6 @@
     <string id="30158">Back</string>
     <string id="30159">Forward</string>
     <string id="30160">Refresh</string>
+    <string id="30161">Exit Web Viewer</string>
 
 </strings>

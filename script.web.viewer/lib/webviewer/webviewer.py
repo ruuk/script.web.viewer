@@ -9,7 +9,7 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-12-2011'
-__version__ = '0.7.8'
+__version__ = '0.7.9'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
@@ -952,6 +952,7 @@ class LineView:
 class ViewerWindow(BaseWindow):
 	IS_DIALOG = False
 	def __init__(self, *args, **kwargs):
+		LOG('STARTED')
 		self.url = kwargs.get('url')
 		self.autoForms = kwargs.get('autoForms', [])
 		self.autoClose = kwargs.get('autoClose')
@@ -1438,6 +1439,7 @@ class ViewerWindow(BaseWindow):
 		return True
 		
 	def displayPage(self):
+		LOG('displayPage() - START')
 		disp, title = self.page.forDisplayWithIDs()
 		self.baseDisplay = disp
 		xbmcgui.lock()
@@ -1473,6 +1475,7 @@ class ViewerWindow(BaseWindow):
 		
 		self.selectionChanged(self.pageList.getSelectedPosition(), -1)
 		for fd in self.autoForms:
+			print fd
 			f = self.page.getForm(url=fd.get('url'), name=fd.get('name'), action=fd.get('action'), index=fd.get('index'))
 			if f:
 				submit = fd.get('autosubmit') == 'true'
@@ -1487,12 +1490,14 @@ class ViewerWindow(BaseWindow):
 				#self.showForm(f.form)
 				if submit:
 					self.form = f.form
-					self.submitForm(None)
+					LOG('displayPage() - END - FORM SUBMIT')
+					self.submitForm(None)	
 					return
 				break
 		if self.autoClose:
 			if self.page.matches(self.autoClose.get('url'), self.autoClose.get('html')):
 				self.doAutoClose(self.autoClose.get('heading'), self.autoClose.get('message'))
+		LOG('displayPage() - END')
 				
 	def doAutoClose(self, heading, message):
 		if xbmcgui.Dialog().yesno(heading, message, __language__(30148)): self.close()
@@ -1799,7 +1804,7 @@ class ViewerWindow(BaseWindow):
 					__language__(30153)]
 		
 		if self.simpleControls:
-			options += [__language__(30158), __language__(30159), __language__(30160), __language__(30112)]
+			options += [__language__(30158), __language__(30159), __language__(30160), __language__(30112),__language__(30161)]
 		
 		idx_base = len(options) - 1
 		if etype == PE_LINK:
@@ -1825,6 +1830,7 @@ class ViewerWindow(BaseWindow):
 			elif idx == 7: self.forward()
 			elif idx == 8: self.refresh()
 			elif idx == 9: self.viewHistory()
+			elif idx == 10: self.close()
 			
 		#handle contextual options
 		if etype == PE_LINK:
@@ -2064,7 +2070,8 @@ def doKeyboard(prompt, default='', hidden=False):
 ################################################################################
 # getWebResult
 ################################################################################
-def getWebResult(url, autoForms=[], autoClose=None, dialog=False, runFromSubDir=None):
+def getWebResult(url, autoForms=[], autoClose=None, dialog=False, runFromSubDir=None,clearCookies=False):
+	LOG('getWebResult() - STARTED')
 	"""Open a url and get the result
 	
 	url, html = webviewer.getWebResult(url,autoForms=[],autoClose=None,dialog=False)
@@ -2096,6 +2103,7 @@ def getWebResult(url, autoForms=[], autoClose=None, dialog=False, runFromSubDir=
 	Setting the dialog parameter to true will cause the browser to open as a dialog instead as a normal window.
 	
 	"""
+	if clearCookies: WR.browser._ua_handlers["_cookies"].cookiejar.clear()
 	if runFromSubDir: __addon__.setAddonPath(runFromSubDir)
 	apath = xbmc.translatePath(__addon__.getAddonInfo('path'))
 	if not os.path.exists(os.path.join(apath,'resources','skins','Default','720p','script-webviewer-page.xml')):
@@ -2113,6 +2121,7 @@ def getWebResult(url, autoForms=[], autoClose=None, dialog=False, runFromSubDir=
 		url = None
 		html = None
 	del w
+	LOG('getWebResult() - FINISHED')
 	return url, html
 	
 def setHome(url):

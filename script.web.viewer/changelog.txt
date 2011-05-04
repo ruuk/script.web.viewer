@@ -1,6 +1,10 @@
 Web Viewer Changelog
 
-Current Version : 0.7.8
+Current Version : 0.7.9
+
+*** 0.7.9 ***
+
+Added 'Exit Web Viewer' option to simple controls
 
 *** 0.7.8 ***
 
