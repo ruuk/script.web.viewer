@@ -8,8 +8,8 @@ import mechanize, threading
 __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
-__date__ = '01-12-2011'
-__version__ = '0.7.9'
+__date__ = '12-27-2011'
+__version__ = '0.8.0'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
