@@ -9,7 +9,7 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-19-2011'
-__version__ = '0.8.2'
+__version__ = '0.8.3'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
@@ -1504,9 +1504,10 @@ class ViewerWindow(BaseWindow):
 				xbmc.executebuiltin('ACTION(select)')
 				#self.showForm(f.form)
 				if submit:
+					self.autoForms = []
 					self.form = f.form
 					LOG('displayPage() - END - FORM SUBMIT')
-					self.submitForm(None)	
+					self.submitForm(None)
 					return
 				break
 		if self.autoClose:

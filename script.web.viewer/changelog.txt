@@ -1,6 +1,10 @@
 Web Viewer Changelog
 
-Current Version : 0.8.2
+Current Version : 0.8.3
+
+*** 0.8.3 ***
+
+Fixed an autoforms bug which caused infinite loops when form failed and then redirected back to the same form.
 
 *** 0.8.2 ***
 
