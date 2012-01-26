@@ -1,6 +1,10 @@
 Web Viewer Changelog
 
-Current Version : 0.8.3
+Current Version : 0.8.4
+
+*** 0.8.4 ***
+
+Handle more complex <br /> tags
 
 *** 0.8.3 ***
 
