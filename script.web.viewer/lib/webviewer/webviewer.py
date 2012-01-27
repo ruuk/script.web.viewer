@@ -1537,7 +1537,8 @@ class ViewerWindow(BaseWindow):
 		self.getControl(150).reset()
 		i = 0
 		for url in self.page.imageURLs():
-			url = fullURL(self.url, url)
+			#Replace file:// so images display properly in xbmc
+			url = fullURL(self.url, url).replace('file://','')
 			i += 1
 			item = xbmcgui.ListItem(self.imageReplace % (i, url), iconImage=url)
 			item.setProperty('url', url)
