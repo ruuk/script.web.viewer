@@ -260,6 +260,9 @@ class WebReader:
 class WebPage:
 	def __init__(self, resData, id='', forms=[]):
 		self.url = resData.url
+		end = ''
+		#if not '<a ' in resData.data and not '<img ' in resData.data and not '<form ' in resData.data: 
+		#	end = '<a href="#END">END OF PAGE</a><a name="#END"></a>'
 		self.html = resData.data
 		self.content = resData.content
 		self.contentDisp = resData.contentDisp
@@ -287,6 +290,16 @@ class WebPage:
 			self.forms.append(Form(f, ct))
 			ct += 1
 		if self.html: self.processPage()
+		#Fix for pages without elements
+		if not self.elements:
+			element = Link(HC.linkFilter.search('<a href="#END">NO LINKS ON PAGE</a>'), self.url, 0)
+			element.elementIndex = 0
+			element.displayPageIndex = len(self._display)
+			element.lineNumber = len(self.forDisplay().split('[CR]'))-1
+			self._links.append(element)
+			self.elements.append(element)
+			self._display += HC.linkFilter.sub(HC.linkConvert,'[CR]<a href="#END"> </a>')
+			self._displayWithIDs += HC.linkFilter.sub(HC.linkConvert,'[CR]<a href="#END"> </a>')
 		
 	def getFileName(self):
 		fn_m = re.search('filename="([^"]*)"', self.contentDisp)
