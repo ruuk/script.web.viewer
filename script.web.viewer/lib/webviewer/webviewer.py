@@ -1864,7 +1864,7 @@ class ViewerWindow(BaseWindow):
 		
 	def settings(self):
 		dialog = xbmcgui.Dialog()
-		idx = dialog.select(__language__(30110), [__language__(30133), __language__(30142), __language__(30157)])
+		idx = dialog.select(__language__(30110), [__language__(30133), __language__(30142), __language__(30157), __language__(30162)])
 		if idx < 0: return
 		
 		if idx == 0:
@@ -1874,6 +1874,8 @@ class ViewerWindow(BaseWindow):
 			xbmcgui.Dialog().ok(__language__(30109), __language__(30143), self.page.getTitle())
 		elif idx == 2:
 			self.viewPageSource()
+		elif idx == 3:
+			self.viewReadMode()
 	
 	def openSettings(self):
 		__addon__.openSettings()
@@ -1887,6 +1889,11 @@ class ViewerWindow(BaseWindow):
 		#import codecs
 		#codecs.open('/home/ruuk/test.txt','w',encoding='utf-8').write(source)
 		w = SourceDialog("script-webviewer-source.xml" , __addon__.getAddonInfo('path'), THEME, source=source)
+		w.doModal()
+		del w
+		
+	def viewReadMode(self):
+		w = SourceDialog("script-webviewer-source.xml" , __addon__.getAddonInfo('path'), THEME, source=self.page.forDisplay())
 		w.doModal()
 		del w
 		

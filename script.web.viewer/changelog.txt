@@ -5,6 +5,7 @@ Current Version : 0.8.4
 *** 0.8.4 ***
 
 Handle more complex <br /> tags
+Added Read View to sub-options menu (For viewing pages without selectable elements or with widely spaced selectable elements.
 
 *** 0.8.3 ***
 
