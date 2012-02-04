@@ -590,21 +590,22 @@ class Link(PageElement, LinkBase):
 		return self._isImage
 
 def fullURL(baseUrl, url):
-		if url.startswith('ftp://') or url.startswith('http://') or url.startswith('https://'): return url
-		pre = baseUrl.split('://', 1)[0] + '://'
-		if not url.startswith(pre):
-			base = baseUrl.split('://', 1)[-1]
-			base = base.rsplit('/', 1)[0]
-			domain = base.split('/', 1)[0]
-			if url.startswith('/'):
-				if url.startswith('//'):
-					return pre.split('/', 1)[0] + url
-				else:
-					return pre + domain + url
+	if url.startswith('ftp://') or url.startswith('http://') or url.startswith('https://') or url.startswith('file:/'): return url
+	if not (baseUrl.startswith('file://') or baseUrl.startswith('file:///')) and baseUrl.startswith('file:/'): baseUrl = baseUrl.replace('file:/','file:///')
+	pre = baseUrl.split('://', 1)[0] + '://'
+	if not url.startswith(pre):
+		base = baseUrl.split('://', 1)[-1]
+		base = base.rsplit('/', 1)[0]
+		domain = base.split('/', 1)[0]
+		if url.startswith('/'):
+			if url.startswith('//'):
+				url =  pre.split('/', 1)[0] + url
 			else:
-				if not base.endswith('/'): base += '/'
-				return pre + base + url
-		return url
+				url =  pre + domain + url
+		else:
+			if not base.endswith('/'): base += '/'
+			url =  pre + base + url
+	return url
 
 class URLHistory:
 	def __init__(self, first):
@@ -1657,6 +1658,7 @@ class ViewerWindow(BaseWindow):
 			#xbmcgui.Dialog().ok(__language__(30052),__language__(30146),fname,__language__(30147) % ftype)
 		
 	def showImage(self, url):
+		LOG('SHOWING IMAGE: ' + url)
 		base = os.path.join(xbmc.translatePath(__addon__.getAddonInfo('profile')), 'imageviewer')
 		if not os.path.exists(base): os.makedirs(base)
 		clearDirFiles(base)
