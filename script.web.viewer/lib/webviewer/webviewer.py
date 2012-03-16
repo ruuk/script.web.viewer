@@ -470,7 +470,7 @@ class WebPage:
 		if name:
 			idx = 0
 			for f in self.forms:
-				if name == f.form.name:
+				if name == f.form.name or name == f.form.attrs.get('id'):
 					if index != None:
 						if index != idx: continue
 					return f
