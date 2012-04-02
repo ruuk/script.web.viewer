@@ -1,6 +1,10 @@
 Web Viewer Changelog
 
-Current Version : 0.8.4
+Current Version : 0.8.5
+
+*** 0.8.5 ***
+
+Fixed a bug causing downloads to fail
 
 *** 0.8.4 ***
 

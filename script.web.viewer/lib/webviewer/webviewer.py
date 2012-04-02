@@ -9,7 +9,7 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-19-2011'
-__version__ = '0.8.4'
+__version__ = '0.8.5'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
@@ -1821,7 +1821,7 @@ class ViewerWindow(BaseWindow):
 	def downloadLink(self, url, fname=None):
 		base = xbmcgui.Dialog().browse(3, __language__(30128), 'files')
 		if not base: return
-		fname, ftype = Downloader(message=__language__(30129)).downloadURL(base, url, fname, open=WR.browser.open)
+		fname, ftype = Downloader(message=__language__(30129)).downloadURL(base, url, fname, opener=WR.browser.open)
 		if not fname: return
 		xbmcgui.Dialog().ok(__language__(30109), __language__(30130), fname, __language__(30115) % ftype)
 		
