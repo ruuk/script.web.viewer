@@ -1504,7 +1504,6 @@ class ViewerWindow(BaseWindow):
 		
 		self.selectionChanged(self.pageList.getSelectedPosition(), -1)
 		for fd in self.autoForms:
-			LOG(fd)
 			f = self.page.getForm(url=fd.get('url'), name=fd.get('name'), action=fd.get('action'), index=fd.get('index'))
 			if f:
 				submit = fd.get('autosubmit') == 'true'
