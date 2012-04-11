@@ -9,7 +9,7 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-19-2011'
-__version__ = '0.8.5'
+__version__ = '0.8.6'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
@@ -56,6 +56,8 @@ def ERROR(message):
 def LOG(message):
 	print 'WEBVIEWER: %s' % ENCODE(str(message))
 
+LOG('Version: ' + __version__)
+LOG('Python Version: ' + sys.version)
 def clearDirFiles(filepath):
 	if not os.path.exists(filepath): return
 	for f in os.listdir(filepath):

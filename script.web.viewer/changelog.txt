@@ -1,6 +1,11 @@
 Web Viewer Changelog
 
-Current Version : 0.8.5
+Current Version : 0.8.6
+
+*** 0.8.6 ***
+
+Remove autoforms logging that could print passwords to the log in plain text
+Added logging of version and python version
 
 *** 0.8.5 ***
 
