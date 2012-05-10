@@ -1,6 +1,10 @@
 Web Viewer Changelog
 
-Current Version : 0.8.6
+Current Version : 0.8.7
+
+*** 0.8.7 ***
+
+Fix broken skin for image viewer
 
 *** 0.8.6 ***
 
