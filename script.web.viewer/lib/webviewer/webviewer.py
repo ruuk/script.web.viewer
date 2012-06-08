@@ -9,7 +9,7 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-19-2011'
-__version__ = '0.8.7'
+__version__ = '0.8.8'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
@@ -24,6 +24,7 @@ ACTION_PAGE_DOWN = 6
 ACTION_SELECT_ITEM = 7
 ACTION_HIGHLIGHT_ITEM = 8
 ACTION_PARENT_DIR = 9
+ACTION_PARENT_DIR2 = 92
 ACTION_PREVIOUS_MENU = 10
 ACTION_SHOW_INFO = 11
 ACTION_PAUSE = 12
@@ -823,7 +824,7 @@ class BaseWindow(ThreadWindow):
 		return ThreadWindow.onClick(self, controlID)
 			
 	def onAction(self, action):
-		if action == ACTION_PARENT_DIR:
+		if action == ACTION_PARENT_DIR or action == ACTION_PARENT_DIR2:
 			action = ACTION_PREVIOUS_MENU
 		if ThreadWindow.onAction(self, action): return
 		xbmcgui.WindowXMLDialog.onAction(self, action)
@@ -864,7 +865,7 @@ class ImageDialog(BaseWindow, xbmcgui.WindowXMLDialog):
 		pass
 	
 	def onAction(self, action):
-		if action == ACTION_PARENT_DIR:
+		if action == ACTION_PARENT_DIR or action == ACTION_PARENT_DIR2:
 			action = ACTION_PREVIOUS_MENU
 		xbmcgui.WindowXMLDialog.onAction(self, action)
 		
@@ -888,7 +889,7 @@ class SourceDialog(BaseWindow, xbmcgui.WindowXMLDialog):
 		pass
 	
 	def onAction(self, action):
-		if action == ACTION_PARENT_DIR:
+		if action == ACTION_PARENT_DIR or action == ACTION_PARENT_DIR2:
 			action = ACTION_PREVIOUS_MENU
 		elif action == ACTION_PAGE_UP or action == 104:
 			action = ACTION_MOVE_UP
@@ -1801,7 +1802,7 @@ class ViewerWindow(BaseWindow):
 				self.doMenu()
 				return
 			
-		if action == ACTION_PARENT_DIR or action == ACTION_PLAYER_REWIND:
+		if action == ACTION_PARENT_DIR or action == ACTION_PARENT_DIR2 or action == ACTION_PLAYER_REWIND:
 			self.back()
 			return
 		elif action == ACTION_PLAYER_FORWARD:

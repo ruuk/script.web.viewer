@@ -1,6 +1,10 @@
 Web Viewer Changelog
 
-Current Version : 0.8.7
+Current Version : 0.8.8
+
+*** 0.8.8 ***
+
+Handle alternate code handling for 'Previous Menu' control
 
 *** 0.8.7 ***
 
