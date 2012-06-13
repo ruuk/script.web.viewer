@@ -1,10 +1,14 @@
 Web Viewer Changelog
 
-Current Version : 0.8.8
+Current Version : 0.8.9
+
+*** 0.8.9 ***
+
+When viewing from another addon, the parent directory (backspace on the keyboard) action will now exit when there are no more pages in the history.
 
 *** 0.8.8 ***
 
-Handle alternate code handling for 'Previous Menu' control
+Handle alternate code for 'Previous Menu' action
 
 *** 0.8.7 ***
 

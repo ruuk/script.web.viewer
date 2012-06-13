@@ -9,7 +9,7 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-19-2011'
-__version__ = '0.8.8'
+__version__ = '0.8.9'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
@@ -1010,6 +1010,7 @@ class ViewerWindow(BaseWindow):
 		self.formFocused = False
 		self.lastPageSearch = ''
 		self.bmManger = BookmarksManager(os.path.join(xbmc.translatePath(__addon__.getAddonInfo('profile')), 'bookmarks'))
+		self.standalone = True
 		BaseWindow.__init__(self, *args, **kwargs)
 		
 	def onInit(self):
@@ -1029,9 +1030,10 @@ class ViewerWindow(BaseWindow):
 		self.getControl(310).setVisible(False)
 		
 	def back(self):
-		if not self.history.canGoBack(): return
+		if not self.history.canGoBack(): return False
 		hloc = self.history.goBack(self.pageList.getSelectedPosition())
 		self.gotoHistory(hloc)
+		return True
 
 	def forward(self):
 		if not self.history.canGoForward(): return
@@ -1803,8 +1805,10 @@ class ViewerWindow(BaseWindow):
 				return
 			
 		if action == ACTION_PARENT_DIR or action == ACTION_PARENT_DIR2 or action == ACTION_PLAYER_REWIND:
-			self.back()
-			return
+			if not self.back() and not self.standalone:
+				action == ACTION_PREVIOUS_MENU
+			else:
+				return
 		elif action == ACTION_PLAYER_FORWARD:
 			self.forward()
 			return
@@ -2159,6 +2163,7 @@ def getWebResult(url, autoForms=[], autoClose=None, dialog=False, runFromSubDir=
 		w = ViewerWindowDialog("script-webviewer-page.xml" , apath, THEME, url=url, autoForms=autoForms, autoClose=autoClose)
 	else:
 		w = ViewerWindowNormal("script-webviewer-page.xml" , apath, THEME, url=url, autoForms=autoForms, autoClose=autoClose)
+	w.standalone = False
 	w.doModal()
 	if w.page:
 		url = w.page.url
