@@ -1,6 +1,10 @@
 Web Viewer Changelog
 
-Current Version : 0.8.9
+Current Version : 0.9.0
+
+*** 0.9.0 ***
+
+Now on ATV2 systems, automatically detects ATV2 and sets simple controls to true if unset.
 
 *** 0.8.9 ***
 

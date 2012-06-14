@@ -9,7 +9,7 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-19-2011'
-__version__ = '0.8.9'
+__version__ = '0.9.0'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
@@ -59,6 +59,9 @@ def LOG(message):
 
 LOG('Version: ' + __version__)
 LOG('Python Version: ' + sys.version)
+ATV2 = xbmc.getCondVisibility('System.Platform.ATV2')
+if ATV2: LOG('Running on ATV2')
+
 def clearDirFiles(filepath):
 	if not os.path.exists(filepath): return
 	for f in os.listdir(filepath):
@@ -989,7 +992,11 @@ class ViewerWindow(BaseWindow):
 		self.first = True
 		
 		self.isBoxee = self._isBoxee()
-		self.simpleControls = __addon__.getSetting('simple_controls') == 'true'
+		if ATV2:
+			if not __addon__.getSetting('simple_controls'):
+				LOG('ATV2: Setting unset simple_controls to: true')
+				__addon__.setSetting('simple_controls','true')
+		self.simpleControls = __addon__.getSetting('simple_controls') == 'true'			
 		self.imageReplace = 'IMG #%s: %s'
 		self.page = None
 		self.history = URLHistory(HistoryLocation(self.url))
