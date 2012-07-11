@@ -1,6 +1,13 @@
 Web Viewer Changelog
 
-Current Version : 0.9.0
+Current Version : 0.9.1
+
+*** 0.9.1 ***
+
+Added an option to getWebResult() to pass in a mechanize.Browser instance for WebViewer to use
+Updated mechanize
+Fixed relative URL handling
+When simple controls are enabled (ie ATV2), the parent directory (backspace on the keyboard) action will now exit when there are no more pages in the history.
 
 *** 0.9.0 ***
 

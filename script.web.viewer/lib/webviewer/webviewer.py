@@ -9,7 +9,7 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-19-2011'
-__version__ = '0.9.0'
+__version__ = '0.9.1'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
@@ -89,8 +89,12 @@ class WebReader:
 		self.browser.addheaders = [('User-agent', 'Mozilla/3.0 (compatible)')]
 		#self.browser.addheaders = [('User-agent','Mozilla/5.0 (X11; Linux i686; rv:2.0.1) Gecko/20100101 Firefox/4.0.1')]
 		
+	def setBrowser(self,browser):
+		LOG('Using Alternate Browser')
+		self.browser = browser
+		
 	def getWebPage(self, url, callback=None):
-		LOG(url)
+		LOG('Getting Page at URL: ' + url)
 		if not callback: callback = self.fakeCallback
 		resData = ResponseData(url)
 		id = ''
@@ -608,9 +612,11 @@ def fullURL(baseUrl, url):
 				url =  pre.split('/', 1)[0] + url
 			else:
 				url =  pre + domain + url
-		else:
+		elif url.startswith('.'):
 			if not base.endswith('/'): base += '/'
 			url =  pre + base + url
+		else:
+			url =  pre + domain + '/' + url
 	return url
 
 class URLHistory:
@@ -821,7 +827,7 @@ class BaseWindow(ThreadWindow):
 	def __init__(self, *args, **kwargs):
 		self._progMessageSave = ''
 		ThreadWindow.__init__(self)
-		xbmcgui.WindowXMLDialog.__init__(self, *args, **kwargs)
+		xbmcgui.WindowXMLDialog.__init__(self)
 	
 	def onClick(self, controlID):
 		return ThreadWindow.onClick(self, controlID)
@@ -853,7 +859,7 @@ class BaseWindow(ThreadWindow):
 class ImageDialog(BaseWindow, xbmcgui.WindowXMLDialog):
 	def __init__(self, *args, **kwargs):
 		self.image = kwargs.get('image')
-		xbmcgui.WindowXML.__init__(self, *args, **kwargs)
+		xbmcgui.WindowXML.__init__(self)
 	
 	def onInit(self):
 		self.showImage()
@@ -1549,10 +1555,10 @@ class ViewerWindow(BaseWindow):
 		for link in self.page.links():
 			item = xbmcgui.ListItem(link.text or link.url, link.urlShow())
 			if link.isImage():
-				LOG(link.fullURL())
+				#LOG(link.fullURL())
 				item.setIconImage(link.fullURL())
 			elif link.image:
-				LOG(link.image)
+				#LOG(link.image)
 				item.setIconImage(link.image)
 			else:
 				item.setIconImage('webviewer-link.png')
@@ -1812,7 +1818,7 @@ class ViewerWindow(BaseWindow):
 				return
 			
 		if action == ACTION_PARENT_DIR or action == ACTION_PARENT_DIR2 or action == ACTION_PLAYER_REWIND:
-			if not self.back() and not self.standalone:
+			if not self.back() and (not self.standalone or self.simpleControls):
 				action == ACTION_PREVIOUS_MENU
 			else:
 				return
@@ -2127,7 +2133,7 @@ def doKeyboard(prompt, default='', hidden=False):
 ################################################################################
 # getWebResult
 ################################################################################
-def getWebResult(url, autoForms=[], autoClose=None, dialog=False, runFromSubDir=None,clearCookies=False):
+def getWebResult(url, autoForms=[], autoClose=None, dialog=False, runFromSubDir=None,clearCookies=False,browser=None):
 	LOG('getWebResult() - STARTED')
 	"""Open a url and get the result
 	
@@ -2160,6 +2166,7 @@ def getWebResult(url, autoForms=[], autoClose=None, dialog=False, runFromSubDir=
 	Setting the dialog parameter to true will cause the browser to open as a dialog instead as a normal window.
 	
 	"""
+	if browser: WR.setBrowser(browser)
 	if clearCookies: WR.browser._ua_handlers["_cookies"].cookiejar.clear()
 	if runFromSubDir: __addon__.setAddonPath(runFromSubDir)
 	apath = xbmc.translatePath(__addon__.getAddonInfo('path'))
