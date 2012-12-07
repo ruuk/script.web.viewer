@@ -9,7 +9,7 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-19-2011'
-__version__ = '0.9.1'
+__version__ = '0.9.2'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
@@ -834,9 +834,11 @@ class BaseWindow(ThreadWindow):
 			
 	def onAction(self, action):
 		if action == ACTION_PARENT_DIR or action == ACTION_PARENT_DIR2:
-			action = ACTION_PREVIOUS_MENU
+			#action = ACTION_PREVIOUS_MENU
+			self.close()
+			return
 		if ThreadWindow.onAction(self, action): return
-		xbmcgui.WindowXMLDialog.onAction(self, action)
+		#xbmcgui.WindowXMLDialog.onAction(self, action)
 	
 	def startProgress(self):
 		self._progMessageSave = self.getControl(104).getLabel()
@@ -875,8 +877,10 @@ class ImageDialog(BaseWindow, xbmcgui.WindowXMLDialog):
 	
 	def onAction(self, action):
 		if action == ACTION_PARENT_DIR or action == ACTION_PARENT_DIR2:
-			action = ACTION_PREVIOUS_MENU
-		xbmcgui.WindowXMLDialog.onAction(self, action)
+			#action = ACTION_PREVIOUS_MENU
+			self.close()
+			return
+		#xbmcgui.WindowXMLDialog.onAction(self, action)
 		
 ######################################################################################
 # Source Dialog
@@ -899,12 +903,13 @@ class SourceDialog(BaseWindow, xbmcgui.WindowXMLDialog):
 	
 	def onAction(self, action):
 		if action == ACTION_PARENT_DIR or action == ACTION_PARENT_DIR2:
-			action = ACTION_PREVIOUS_MENU
+			self.close()
+			return
 		elif action == ACTION_PAGE_UP or action == 104:
 			action = ACTION_MOVE_UP
 		elif action == ACTION_PAGE_DOWN  or action == 105:
 			action = ACTION_MOVE_DOWN
-		xbmcgui.WindowXMLDialog.onAction(self, action)
+		#xbmcgui.WindowXMLDialog.onAction(self, action)
 	
 class LineItem:
 	def __init__(self, text='', ids='', index=''):
