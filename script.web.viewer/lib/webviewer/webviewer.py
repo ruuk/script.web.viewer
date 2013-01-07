@@ -9,7 +9,7 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-19-2011'
-__version__ = '0.9.2'
+__version__ = '0.9.3'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
@@ -758,12 +758,12 @@ class ThreadWindow:
 		return False
 	
 	def onAction(self, action):
-		if action == ACTION_RUN_IN_MAIN:
+		if action.getId() == ACTION_RUN_IN_MAIN:
 			if self._function:
 				self._function(*self._functionArgs, **self._functionKwargs)
 				self._resetFunction()
 				return True
-		elif action == ACTION_PREVIOUS_MENU:
+		elif action.getId() == ACTION_PREVIOUS_MENU:
 			if self._currentThread and self._currentThread.isAlive():
 				self._currentThread.stop()
 				if self._endCommand: self._endCommand()
@@ -778,7 +778,7 @@ class ThreadWindow:
 					return True
 				d.close()
 			return False
-		elif action == ACTION_STOP:
+		elif action.getId() == ACTION_STOP:
 			self.stopThread()
 			return True
 		return False
@@ -833,8 +833,8 @@ class BaseWindow(ThreadWindow):
 		return ThreadWindow.onClick(self, controlID)
 			
 	def onAction(self, action):
-		if action == ACTION_PARENT_DIR or action == ACTION_PARENT_DIR2:
-			#action = ACTION_PREVIOUS_MENU
+		if action.getId() == ACTION_PARENT_DIR or action.getId() == ACTION_PARENT_DIR2:
+			#action.getId() = ACTION_PREVIOUS_MENU
 			self.close()
 			return
 		if ThreadWindow.onAction(self, action): return
@@ -876,8 +876,8 @@ class ImageDialog(BaseWindow, xbmcgui.WindowXMLDialog):
 		pass
 	
 	def onAction(self, action):
-		if action == ACTION_PARENT_DIR or action == ACTION_PARENT_DIR2:
-			#action = ACTION_PREVIOUS_MENU
+		if action.getId() == ACTION_PARENT_DIR or action.getId() == ACTION_PARENT_DIR2:
+			#action.getId() = ACTION_PREVIOUS_MENU
 			self.close()
 			return
 		#xbmcgui.WindowXMLDialog.onAction(self, action)
@@ -902,13 +902,13 @@ class SourceDialog(BaseWindow, xbmcgui.WindowXMLDialog):
 		pass
 	
 	def onAction(self, action):
-		if action == ACTION_PARENT_DIR or action == ACTION_PARENT_DIR2:
+		if action.getId() == ACTION_PARENT_DIR or action.getId() == ACTION_PARENT_DIR2 or action.getId() == ACTION_PREVIOUS_MENU:
 			self.close()
 			return
-		elif action == ACTION_PAGE_UP or action == 104:
-			action = ACTION_MOVE_UP
-		elif action == ACTION_PAGE_DOWN  or action == 105:
-			action = ACTION_MOVE_DOWN
+		#elif action.getId() == ACTION_PAGE_UP or action.getId() == 104:
+		#	action = ACTION_MOVE_UP
+		#elif action == ACTION_PAGE_DOWN  or action == 105:
+		#	action = ACTION_MOVE_DOWN
 		#xbmcgui.WindowXMLDialog.onAction(self, action)
 	
 class LineItem:
@@ -1763,16 +1763,17 @@ class ViewerWindow(BaseWindow):
 		#print action.getId()
 		#check for exit so errors won't prevent it
 		if self.simpleControls:
-			if action == ACTION_PAUSE or action == ACTION_PLAYER_PLAY:
-				action = ACTION_CONTEXT_MENU
-		if action == ACTION_PREVIOUS_MENU:
+			if action.getId() == ACTION_PAUSE or action.getId() == ACTION_PLAYER_PLAY:
+				self.doMenu()
+				return
+		if action.getId() == ACTION_PREVIOUS_MENU:
 			if action.getButtonCode() or self.getFocusId() == 111:
-				#Escape was pressed
-				BaseWindow.onAction(self, action)
+				self.close()
 				return
 			else:
 				#This was a mouse right click on a button
-				action = ACTION_CONTEXT_MENU
+				self.doMenu()
+				return
 					
 		#if self.getFocusId() == 122:	
 		if self.getFocusId() == 148:
@@ -1780,63 +1781,63 @@ class ViewerWindow(BaseWindow):
 			if pos != self.linkLastPos:
 				self.linkSelectionChanged(pos, self.linkLastPos)
 				self.linkLastPos = pos
-			elif action == ACTION_CONTEXT_MENU:
+			elif action.getId() == ACTION_CONTEXT_MENU:
 				self.doMenu(PE_LINK)
 		elif self.getFocusId() == 150:
-			if action == ACTION_CONTEXT_MENU:
+			if action.getId() == ACTION_CONTEXT_MENU:
 				self.doMenu(PE_IMAGE)
 		elif self.getFocusId() == 120:
-			if action == ACTION_CONTEXT_MENU:
+			if action.getId() == ACTION_CONTEXT_MENU:
 				self.doMenu(PE_FORM)
 		else:
 			pos = self.pageList.getSelectedPosition()
 			if pos != self.lastPos:
 				self.selectionChanged(pos, self.lastPos)
 				self.lastPos = pos
-			if action == ACTION_MOVE_RIGHT:
+			if action.getId() == ACTION_MOVE_RIGHT:
 				if not self.formFocused: self.nextElement()
 				self.formFocused = False
 				#self.nextLink()
 				return
-			elif action == ACTION_MOVE_LEFT:
+			elif action.getId() == ACTION_MOVE_LEFT:
 				if not self.formFocused:  self.prevElement()
 				self.formFocused = False
 				return
-			if action == ACTION_MOVE_UP or action == 104:
+			if action.getId() == ACTION_MOVE_UP or action.getId() == 104:
 				pos = self.pageList.moveUp()
 				self.selectionChanged(pos, self.lastPos)
 				self.lastPos = pos
 				return
-			elif action == ACTION_MOVE_DOWN  or action == 105:
+			elif action.getId() == ACTION_MOVE_DOWN  or action.getId() == 105:
 				pos = self.pageList.moveDown()
 				self.selectionChanged(pos, self.lastPos)
 				self.lastPos = pos
 				return
-			elif action == ACTION_PAGE_UP or action == ACTION_PREV_ITEM:
+			elif action.getId() == ACTION_PAGE_UP or action.getId() == ACTION_PREV_ITEM:
 				self.pageUp()
 				return
-			elif action == ACTION_PAGE_DOWN or action == ACTION_NEXT_ITEM:
+			elif action.getId() == ACTION_PAGE_DOWN or action.getId() == ACTION_NEXT_ITEM:
 				self.pageDown()
 				return
-			elif action == ACTION_CONTEXT_MENU:
+			elif action.getId() == ACTION_CONTEXT_MENU:
 				self.doMenu()
 				return
 			
-		if action == ACTION_PARENT_DIR or action == ACTION_PARENT_DIR2 or action == ACTION_PLAYER_REWIND:
+		if action.getId() == ACTION_PARENT_DIR or action.getId() == ACTION_PARENT_DIR2 or action.getId() == ACTION_PLAYER_REWIND:
 			if not self.back() and (not self.standalone or self.simpleControls):
-				action == ACTION_PREVIOUS_MENU
+				self.close()
 			else:
 				return
-		elif action == ACTION_PLAYER_FORWARD:
+		elif action.getId() == ACTION_PLAYER_FORWARD:
 			self.forward()
 			return
-		elif action == ACTION_PAUSE:
+		elif action.getId() == ACTION_PAUSE:
 			self.viewHistory()
 			return
-		elif action == ACTION_SHOW_INFO:
+		elif action.getId() == ACTION_SHOW_INFO:
 				self.focusElementList()
 				return
-		elif action == ACTION_PLAYER_PLAY:
+		elif action.getId() == ACTION_PLAYER_PLAY:
 				self.refresh()
 				return
 		

@@ -1,10 +1,14 @@
 Web Viewer Changelog
 
-Current Version : 0.9.2
+Current Version : 0.9.3
+
+*** 0.9.3 ***
+
+Fixed a bug causing some controls not to work in FRODO - so now you can exit the browser :)
 
 *** 0.9.2 ***
 
-Fixed a bug in onAction() causing errors in tFRODO) - (log said ignoring the error could cause memory leaks, so perhaps fixed a memory leak :) )
+Fixed a bug in onAction() causing errors in FRODO - (log said ignoring the error could cause memory leaks, so perhaps fixed a memory leak :) )
 
 *** 0.9.1 ***
 
