@@ -8,8 +8,8 @@ import mechanize, threading
 __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
-__date__ = '01-19-2011'
-__version__ = '0.9.3'
+__date__ = '01-21-2013'
+__version__ = '0.9.4'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
@@ -1355,7 +1355,7 @@ class ViewerWindow(BaseWindow):
 					hasControl = True
 				elif c.type == 'text' or c.type == 'password' or c.type == 'textarea':
 					a = c.attrs
-					label = labels.get(c.id) or labels.get(c.name) or a.get('title') or a.get('value') or a.get('type') or ''
+					label = labels.get(c.id,'').strip() or labels.get(c.name,'').strip() or a.get('title','').title().strip() or a.get('value','').title().strip() or a.get('id','').title().strip() or a.get('name','').title().strip() or a.get('type','').title().strip() or ''
 					if c.type == 'password':
 						value = '*' * len(c.value or '')
 					else:

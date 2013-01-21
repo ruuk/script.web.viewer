@@ -1,6 +1,10 @@
 Web Viewer Changelog
 
-Current Version : 0.9.3
+Current Version : 0.9.4
+
+*** 0.9.4 ***
+
+Improved labeling of form inputs
 
 *** 0.9.3 ***
 
