@@ -1,6 +1,10 @@
 Web Viewer Changelog
 
-Current Version : 0.9.4
+Current Version : 0.9.5
+
+*** 0.9.5 ***
+
+Added 'accept' header to mechanize.browser to avoid '403 Bad Behavior' errors on some sites
 
 *** 0.9.4 ***
 

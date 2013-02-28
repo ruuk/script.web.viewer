@@ -9,7 +9,7 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-21-2013'
-__version__ = '0.9.4'
+__version__ = '0.9.5'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
@@ -86,7 +86,7 @@ class WebReader:
 		self.browser.set_handle_refresh(True, honor_time=False)
 		self.browser.set_handle_equiv(True)
 		self.browser.set_debug_redirects(True)
-		self.browser.addheaders = [('User-agent', 'Mozilla/3.0 (compatible)')]
+		self.browser.addheaders = [('User-agent', 'Mozilla/3.0 (compatible)'), ('Accept', '*/*')]
 		#self.browser.addheaders = [('User-agent','Mozilla/5.0 (X11; Linux i686; rv:2.0.1) Gecko/20100101 Firefox/4.0.1')]
 		
 	def setBrowser(self,browser):
