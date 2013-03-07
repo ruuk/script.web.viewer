@@ -25,10 +25,10 @@ class HTMLConverter:
 #		self.linkReplace = unicode.encode('[CR]\g<text> (%s: [B]\g<url>[/B])' % u'Link','utf8')
 		self.linkReplace = '[COLOR '+self.linkColor+']%s[/COLOR] '
 		self.frameReplace = '[CR][COLOR '+self.frameColor+']FRAME%s[/COLOR][CR]'
-		self.formReplace = '[CR][COLOR '+self.formColorA+']______________________________[/COLOR][CR][COLOR '+self.formColorB+'][B]- FORM: %s -[/B][/COLOR][CR]%s[CR][COLOR '+self.formColorC+']______________________________[/COLOR][CR][CR]'
+		self.formReplace = '[CR][COLOR '+self.formColorA+']'+'_'*200+'[/COLOR][CR][COLOR '+self.formColorB+'][B]- FORM: %s -[/B][/COLOR][CR]%s[CR][COLOR '+self.formColorC+']'+'_'*200+'[/COLOR][CR][CR]'
 		self.submitReplace = '[\g<value>] '
 		#static filters
-		self.linkFilter = re.compile('<a[^>]+?href=["\'](?P<url>[^>"]+?)["\'][^>]*?(?:title=["\'](?P<title>[^>"]+?)["\'][^>]*?)?>(?P<text>.*?)</a>',re.I|re.S|re.U)
+		self.linkFilter = re.compile('<(?:a|embed)[^>]+?(?:href|src)=["\'](?P<url>[^>"]+?)["\'][^>]*?(?:title=["\'](?P<title>[^>"]+?)["\'][^>]*?)?>(?P<text>.*?)</(?:a|embed)>',re.I|re.S|re.U)
 		self.imageFilter = re.compile('<img[^>]+?src=["\'](?P<url>[^>"]+?)["\'][^>]*?>',re.I|re.S|re.U)
 		self.scriptFilter = re.compile('<script[^>]*?>.*?</script>',re.S|re.I)
 		self.styleFilter = re.compile('<style[^>]*?>.+?</style>',re.I)

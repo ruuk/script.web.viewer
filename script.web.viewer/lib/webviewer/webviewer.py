@@ -3,13 +3,14 @@ from htmltoxbmc import HTMLConverter
 import re, os, sys, time, urllib2, urlparse
 import xbmc, xbmcgui #@UnresolvedImport
 import mechanize, threading
+import video
 
 
 __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-21-2013'
-__version__ = '0.9.5'
+__version__ = '0.9.6'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
@@ -88,6 +89,9 @@ class WebReader:
 		self.browser.set_debug_redirects(True)
 		self.browser.addheaders = [('User-agent', 'Mozilla/3.0 (compatible)'), ('Accept', '*/*')]
 		#self.browser.addheaders = [('User-agent','Mozilla/5.0 (X11; Linux i686; rv:2.0.1) Gecko/20100101 Firefox/4.0.1')]
+		self.frameFilter = re.compile('<i?frame[^>]*?src="(?P<url>[^>"]+?)"[^>]*?>(?:.*?</iframe>)?',re.I)
+		self.titleAttrFilter = re.compile('title="([^>"]*?)"',re.I)
+		self.nameAttrFilter = re.compile('name="([^>"]*?)"',re.I)
 		
 	def setBrowser(self,browser):
 		LOG('Using Alternate Browser')
@@ -164,8 +168,25 @@ class WebReader:
 		#print response.info()
 		if not content.startswith('text'): return ResponseData(response.geturl(), content, content_disp=contentDisp) 
 		if not callback(30, __language__(30104)): return None
-		return ResponseData(response.geturl(), content, response.read())
+		html = response.read()
+		if __addon__.getSetting('inline_frames') == 'true':
+			html = self.frameFilter.sub(self.frameLoader,html)
+		return ResponseData(response.geturl(), content, html)
 		
+	def frameLoader(self,m):
+		try:
+			url = m.group('url')
+			html = self.readURL(url, self.fakeCallback).data
+			title = ''
+			title_m = self.titleAttrFilter.search(m.group(0))
+			if not title_m:
+				title_m = self.nameAttrFilter.search(m.group(0))
+			if title_m: title = ':%s' % title_m.group(1)
+			return '<br />--FRAME' + title.replace(' ','_') + ('-'*200) + '<br />'+ html + '<br />' + ('-'*200) + '<br />'
+		except:
+			ERROR('Failed to load frame inline')
+			return m.group(0)
+	
 	def submitForm(self, form, submit_control, callback):
 		if not callback: callback = self.fakeCallback
 		self.browser.form = form
@@ -337,32 +358,36 @@ class WebPage:
 		self.frames()
 		self.elements = []
 		for part in re.split(alltags, disp):
-			if pre != None:
-				stack += pre
-				index = len(stack)
-				lines = stack.count('[CR]')
-				stack += part
-				pre = None
-				type = types[part]
-				if type == PE_LINK:
-					element = self._links[lct]
-					lct += 1
-				elif type == PE_IMAGE:
-					element = self._images[ict]
-					ict += 1
-				elif type == PE_FORM:
-					element = self.forms[fct]
-					fct += 1
-				elif type == PE_FRAME:
-					element = self._frames[frct]
-					frct += 1
-				element.elementIndex = ct
-				element.displayPageIndex = index
-				element.lineNumber = lines
-				self.elements.append(element)
-				ct += 1
-			else:
-				pre = part
+			try:
+				if pre != None:
+					stack += pre
+					index = len(stack)
+					lines = stack.count('[CR]')
+					stack += part
+					pre = None
+					type = types[part]
+					if type == PE_LINK:
+						element = self._links[lct]
+						lct += 1
+					elif type == PE_IMAGE:
+						element = self._images[ict]
+						ict += 1
+					elif type == PE_FORM:
+						element = self.forms[fct]
+						fct += 1
+					elif type == PE_FRAME:
+						element = self._frames[frct]
+						frct += 1
+					element.elementIndex = ct
+					element.displayPageIndex = index
+					element.lineNumber = lines
+					self.elements.append(element)
+					ct += 1
+				
+				else:
+					pre = part
+			except IndexError:
+				continue
 		
 	def getNextElementAfterPageIndex(self, index):
 		for e in self.elements:
@@ -1029,6 +1054,7 @@ class ViewerWindow(BaseWindow):
 		self.lastPageSearch = ''
 		self.bmManger = BookmarksManager(os.path.join(xbmc.translatePath(__addon__.getAddonInfo('profile')), 'bookmarks'))
 		self.standalone = True
+		self.videoHandler = video.WebVideo()
 		BaseWindow.__init__(self, *args, **kwargs)
 		
 	def onInit(self):
@@ -1064,13 +1090,27 @@ class ViewerWindow(BaseWindow):
 		self.setHistoryControls()
 		self.refresh()
 		
-	def gotoURL(self, url=None):
+	def gotoURL(self, url=None,force_video=False):
 		if not url:
 			default = ''
 			if __addon__.getSetting('goto_pre_filled') == 'true': default = self.page.url
 			url = doKeyboard(__language__(30111), default=default)
-			if not url: return
+			if not url: return False
 			if not url.startswith('http://'): url = 'http://' + url
+		elif self.videoHandler.mightBeVideo(url):
+			try:
+				vid = self.videoHandler.getVideoObject(url)
+				if vid and vid.isVideo:
+					if force_video:
+						yes = True
+					else:
+						yes = xbmcgui.Dialog().yesno('Play Video?','Click YES to play the video.','Click NO to follow the link.')
+					if yes:
+						video.play(vid.getPlayableURL())
+						return True
+			except:
+				ERROR('Failed play video')
+				return False
 		old = HistoryLocation(self.page and self.page.url or self.url, self.pageList.getSelectedPosition())
 		new = HistoryLocation(url)
 		self.history.addURL(old, new)
@@ -1078,6 +1118,7 @@ class ViewerWindow(BaseWindow):
 		self.line = 0
 		self.setHistoryControls()
 		self.refresh()
+		return True
 		
 	def setHistoryControls(self):
 		self.getControl(200).setVisible(self.history.canGoBack())
@@ -1764,7 +1805,7 @@ class ViewerWindow(BaseWindow):
 		#check for exit so errors won't prevent it
 		if self.simpleControls:
 			if action.getId() == ACTION_PAUSE or action.getId() == ACTION_PLAYER_PLAY:
-				self.doMenu()
+				self.c()
 				return
 		if action.getId() == ACTION_PREVIOUS_MENU:
 			if action.getButtonCode() or self.getFocusId() == 111:
@@ -1835,11 +1876,14 @@ class ViewerWindow(BaseWindow):
 			self.viewHistory()
 			return
 		elif action.getId() == ACTION_SHOW_INFO:
-				self.focusElementList()
-				return
+			self.focusElementList()
+			return
 		elif action.getId() == ACTION_PLAYER_PLAY:
-				self.refresh()
+			if self.videoHandler.getVideoObject(self.page.url,just_ID=True):
+				self.gotoURL(self.page.url,force_video=True)
 				return
+			self.refresh()
+			return
 		
 		BaseWindow.onAction(self, action)
 		
@@ -1855,6 +1899,13 @@ class ViewerWindow(BaseWindow):
 		if element and not etype: etype = element.type
 		
 		#populate options
+		optionsMatch = [	'goto_url',
+							'bookmarks',
+							'settings',
+							'help',
+							'google_search',
+							'page_search']
+		
 		options = [	__language__(30131),
 					__language__(30132),
 					__language__(30110),
@@ -1863,45 +1914,54 @@ class ViewerWindow(BaseWindow):
 					__language__(30153)]
 		
 		if self.simpleControls:
+			optionsMatch += ['back','forward','refresh','history','close']
 			options += [__language__(30158), __language__(30159), __language__(30160), __language__(30112),__language__(30161)]
 		
 		idx_base = len(options) - 1
 		if etype == PE_LINK:
+			optionsMatch += ['open_link','save_link']
 			options += [__language__(30134), __language__(30135)]
-			if element.image: options.append(__language__(30136))
-			if element.isImage(): options.append(__language__(30137))
-		elif etype == PE_IMAGE: options += [__language__(30138), __language__(30139)]
-		elif etype == PE_FORM: options.append(__language__(30140))
+			if element.image:
+				optionsMatch.append('link_image')
+				options.append(__language__(30136))
+			if element.isImage():
+				optionsMatch.append('target_image')
+				options.append(__language__(30137))
+		elif etype == PE_IMAGE:
+			optionsMatch += ['view_image','save_image']
+			options += [__language__(30138), __language__(30139)]
+		elif etype == PE_FORM:
+			optionsMatch.append('submit_form')
+			options.append(__language__(30140))
+		if self.videoHandler.getVideoObject(self.page.url,just_ID=True):
+			optionsMatch.append('play_video')
+			options.append(__language__(30163))
 		
 		#do dialog/handle common
 		dialog = xbmcgui.Dialog()
 		idx = dialog.select(__language__(30110), options)
 		if idx < 0: return
-		elif idx == 0: self.gotoURL()
-		elif idx == 1: self.bookmarks()
-		elif idx == 2: self.settings()
-		elif idx == 3: self.doHelp()
-		elif idx == 4: self.googleSearch()
-		elif idx == 5: self.searchPage()
 		
-		if self.simpleControls:
-			if idx == 6: self.back()
-			elif idx == 7: self.forward()
-			elif idx == 8: self.refresh()
-			elif idx == 9: self.viewHistory()
-			elif idx == 10: self.close()
-			
-		#handle contextual options
-		if etype == PE_LINK:
-			if idx == idx_base + 1: self.linkSelected()
-			elif idx == idx_base + 2: self.downloadLink(element.fullURL())
-			elif options[idx] == __language__(30136): self.showImage(fullURL(self.url, element.image))
-			elif options[idx] == __language__(30137): self.showImage(element.fullURL())
-		elif etype == PE_IMAGE:
-			if idx == idx_base + 1: self.showImage(element.fullURL())
-			elif idx == idx_base + 2: self.downloadLink(element.fullURL())
-		elif etype == PE_FORM:
-			if idx == idx_base + 1: self.submitForm(None)
+		oid = optionsMatch[idx]
+		if   oid == 'goto_url': self.gotoURL()
+		elif oid == 'bookmarks': self.bookmarks()
+		elif oid == 'settings': self.settings()
+		elif oid == 'help': self.doHelp()
+		elif oid == 'google_search': self.googleSearch()
+		elif oid == 'page_search': self.searchPage()
+		elif oid == 'back': self.back()
+		elif oid == 'forward': self.forward()
+		elif oid == 'refresh': self.refresh()
+		elif oid == 'history': self.viewHistory()
+		elif oid == 'close': self.close()
+		elif oid == 'open_link': self.linkSelected()
+		elif oid == 'save_link': self.downloadLink(element.fullURL())
+		elif oid == 'link_image': self.showImage(fullURL(self.url, element.image))
+		elif oid == 'target_image': self.showImage(element.fullURL())
+		elif oid == 'view_image': self.showImage(element.fullURL())
+		elif oid == 'save_image': self.downloadLink(element.fullURL())
+		elif oid == 'submit_form': self.submitForm(None)
+		elif oid == 'play_video': self.gotoURL(self.page.url,force_video=True)
 		
 	def settings(self):
 		dialog = xbmcgui.Dialog()

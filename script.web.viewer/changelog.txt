@@ -1,6 +1,13 @@
 Web Viewer Changelog
 
-Current Version : 0.9.5
+Current Version : 0.9.6
+
+*** 0.9.6 ***
+
+Added setting 'Experimental: Enable Inline Frames' which, when enabled, loads frames into the page
+Now processes embed tags as links
+Can now play YouTube, Vimeo and flickr video from links (asks if you want to view the video or visit the page)
+Context menu now shows 'Play Page Video' when on a video's page - also pressing play when on a video's page will play the video (if possible)
 
 *** 0.9.5 ***
 
