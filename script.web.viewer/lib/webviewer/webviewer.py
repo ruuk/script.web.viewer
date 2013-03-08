@@ -10,7 +10,7 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-21-2013'
-__version__ = '0.9.6'
+__version__ = '0.9.7'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
@@ -92,7 +92,13 @@ class WebReader:
 		self.frameFilter = re.compile('<i?frame[^>]*?src="(?P<url>[^>"]+?)"[^>]*?>(?:.*?</iframe>)?',re.I)
 		self.titleAttrFilter = re.compile('title="([^>"]*?)"',re.I)
 		self.nameAttrFilter = re.compile('name="([^>"]*?)"',re.I)
-		
+		self.linkFilter = re.compile('<(?:a|embed)[^>]+?(?:href|src)=["\'](?P<url>[^>"]+?)["\'][^>]*?(?:title=["\'](?P<title>[^>"]+?)["\'][^>]*?)?>(?P<text>.*?)</(?:a|embed)>',re.I|re.S|re.U)
+		self.imageFilter = re.compile('<img[^>]+?src=["\'](?P<url>[^>"]+?)["\'][^>]*?>',re.I|re.S|re.U)
+		self.srcFilter = re.compile('src=["\'][^"\']+?["\']')
+		self.hrefFilter = re.compile('href=["\'][^"\']+?["\']')
+		self.frameFixBaseURL = ''
+		self.framesList = []
+
 	def setBrowser(self,browser):
 		LOG('Using Alternate Browser')
 		self.browser = browser
@@ -166,26 +172,58 @@ class WebReader:
 		content = response.info().get('content-type', '')
 		contentDisp = response.info().get('content-disposition', '')
 		#print response.info()
-		if not content.startswith('text'): return ResponseData(response.geturl(), content, content_disp=contentDisp) 
+		if not content.startswith('text'): return ResponseData(response.geturl(), content, content_disp=contentDisp)
 		if not callback(30, __language__(30104)): return None
 		html = response.read()
 		if __addon__.getSetting('inline_frames') == 'true':
+			self.framesList = []
 			html = self.frameFilter.sub(self.frameLoader,html)
+			for f in self.framesList: html = html.replace('</html>','<br />--FRAME' + ('-'*200) + '<br />'+ f + '<br />' + ('-'*200) + '<br /></html>')
+			response.set_data(html)
+			self.browser.set_response(response)
 		return ResponseData(response.geturl(), content, html)
 		
 	def frameLoader(self,m):
 		try:
 			url = m.group('url')
 			html = self.readURL(url, self.fakeCallback).data
+			html = self.fixFramePaths(html, url)
 			title = ''
 			title_m = self.titleAttrFilter.search(m.group(0))
 			if not title_m:
 				title_m = self.nameAttrFilter.search(m.group(0))
 			if title_m: title = ':%s' % title_m.group(1)
-			return '<br />--FRAME' + title.replace(' ','_') + ('-'*200) + '<br />'+ html + '<br />' + ('-'*200) + '<br />'
+			html = html.replace('<html>','').replace('</html>','')
+			html = re.split('<body[^>]*?>',html,1)[-1].split('</body>')[0]
+			if __addon__.getSetting('frames_at_end') == 'true':
+				self.framesList.append(html)
+				return ''
+			else:
+				return '<br />--FRAME' + title.replace(' ','_') + ('-'*200) + '<br />'+ html + '<br />' + ('-'*200) + '<br />'
 		except:
 			ERROR('Failed to load frame inline')
 			return m.group(0)
+	
+	def fixFramePaths(self,html,url):
+		self.frameFixBaseURL = url
+		html = self.imageFilter.sub(self.fixFrameImages,html)
+		html = self.linkFilter.sub(self.fixFrameLinks,html)
+		return html
+	
+	def fixFrameImages(self,m):
+		url = m.group('url')
+		full = fullURL(self.frameFixBaseURL,url)
+		ret = self.srcFilter.sub('src="%s"' % full,m.group(0))
+		return ret
+	
+	def fixFrameLinks(self,m):
+		url = m.group('url')
+		full = fullURL(self.frameFixBaseURL,url)
+		ret = self.srcFilter.sub('src="%s"' % full,m.group(0))
+		ret = self.hrefFilter.sub('href="%s"' % full,ret)
+		print m.group(0)
+		print ret
+		return ret
 	
 	def submitForm(self, form, submit_control, callback):
 		if not callback: callback = self.fakeCallback
@@ -901,7 +939,7 @@ class ImageDialog(BaseWindow, xbmcgui.WindowXMLDialog):
 		pass
 	
 	def onAction(self, action):
-		if action.getId() == ACTION_PARENT_DIR or action.getId() == ACTION_PARENT_DIR2:
+		if action.getId() == ACTION_PARENT_DIR or action.getId() == ACTION_PARENT_DIR2 or action.getId() == ACTION_PREVIOUS_MENU:
 			#action.getId() = ACTION_PREVIOUS_MENU
 			self.close()
 			return

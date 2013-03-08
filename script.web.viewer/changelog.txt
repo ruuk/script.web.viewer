@@ -1,6 +1,12 @@
 Web Viewer Changelog
 
-Current Version : 0.9.6
+Current Version : 0.9.7
+
+*** 0.9.7 ***
+
+Fix for image dialog not closing on 'Previous Menu' button
+Fix for inline frames links and images having incorrect URLs
+Added setting 'Show Frames At Bottom (More Compatible)' - helps prevent, for instance, the frame from being in the middle of a form
 
 *** 0.9.6 ***
 
