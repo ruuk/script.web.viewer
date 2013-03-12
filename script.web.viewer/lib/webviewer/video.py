@@ -1,5 +1,6 @@
 import urllib2,re, sys, os
 import xbmc, xbmcaddon #@UnresolvedImport
+from htmltoxbmc import convertHTMLCodes
 
 def LOG(text):
 	print 'WEBVIEWER: %s' % text
@@ -70,7 +71,21 @@ class WebVideo():
 			video.title = info.get('title','')
 			#video.playableCallback = self.getVimeoFLV
 			video.playable = self.getVimeoPluginURL(ID)
-			video.isVideo = True #False #Vimeo support is broken
+			video.isVideo = True
+		elif 'dailymotion.com/' in url:
+			if just_test: return True
+			ID = self.extractDailymotionIDFromURL(url)
+			if not ID: return None
+			if just_ID: return ID
+			video = Video(ID)
+			video.sourceName = 'Dailymotion'
+			info = self.getDailymotionInfo(ID)
+			if not info: return None
+			video.thumbnail = info.get('thumbnail','')
+			video.title = info.get('title','')
+			#video.playableCallback = self.getVimeoFLV
+			video.playable = self.getDailymotionPluginURL(ID)
+			video.isVideo = True
 		elif 'flic.kr/' in url or 'flickr.com/' in url:
 			if just_test: return True
 			ID = self.getFlickrIDFromURL(url)
@@ -102,11 +117,20 @@ class WebVideo():
 			
 	def getVimeoPluginURL(self,ID):
 		return 'plugin://plugin.video.vimeo/?path=/root/video&action=play_video&videoid=' + ID
+	
+	def getDailymotionPluginURL(self,ID):
+		return 'plugin://plugin.video.dailymotion_com/?mode=playVideo&url=' + ID
+	
 	def getYoutubeThumbURL(self,ID):
 		return 'http://i1.ytimg.com/vi/%s/default.jpg' % ID
 	
 	def getYoutubeSWFUrl(self,ID):
 		return 'http://www.youtube.com/v/' + ID
+		
+	def extractDailymotionIDFromURL(self,url):
+		#http://www.dailymotion.com/video/xy0sej_duck-dynasty-martin-s-pet-lizard_tech?search_algo=2#.UT-Ga2Q-v8Y
+		m = re.search('/video/(\w+?)_',url)
+		if m: return m.group(1)
 		
 	def extractYoutubeIDFromURL(self,url):
 		if '//youtu.be' in url:
@@ -177,9 +201,23 @@ class WebVideo():
 			return None
 		ret = {}
 		try:
-			ret = {}
-			ret['title'] = re.search('<url>([^<]*)</url>',xml).group(1)
+			ret['title'] = convertHTMLCodes(re.search('<title>([^<]*)</title>',xml).group(1))
+		except:
+			pass
+		
+		try:
 			ret['thumbnail'] = re.search('<thumbnail_large>([^<]*)</thumbnail_large>',xml).group(1)
+		except:
+			pass
+		return ret
+		
+	def getDailymotionInfo(self,ID):
+		url = 'http://www.dailymotion.com/video/%s' % ID
+		html = urllib2.urlopen(urllib2.Request(url,None,{'User-Agent':'Wget/1.9.1'})).read()
+		ret = {}
+		try:
+			title,ret['thumbnail'] = re.search('<meta property="og:title" content="([^"].+?)".*<meta property="og:image" content="([^"].+?)(?is)"',html).groups()
+			ret['title'] = convertHTMLCodes(title)
 		except:
 			pass
 		return ret

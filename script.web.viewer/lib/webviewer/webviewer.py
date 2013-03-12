@@ -10,7 +10,7 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-21-2013'
-__version__ = '0.9.7'
+__version__ = '0.9.8'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 __language__ = __addon__.getLocalizedString
 
@@ -221,8 +221,8 @@ class WebReader:
 		full = fullURL(self.frameFixBaseURL,url)
 		ret = self.srcFilter.sub('src="%s"' % full,m.group(0))
 		ret = self.hrefFilter.sub('href="%s"' % full,ret)
-		print m.group(0)
-		print ret
+		#print m.group(0)
+		#print ret
 		return ret
 	
 	def submitForm(self, form, submit_control, callback):

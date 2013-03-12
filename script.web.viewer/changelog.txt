@@ -1,6 +1,10 @@
 Web Viewer Changelog
 
-Current Version : 0.9.7
+Current Version : 0.9.8
+
+*** 0.9.8 ***
+
+Added Dailymotion to list of supported video URLs
 
 *** 0.9.7 ***
 

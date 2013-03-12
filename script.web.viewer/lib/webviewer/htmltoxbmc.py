@@ -61,8 +61,6 @@ class HTMLConverter:
 		
 		#Secondary Filters
 		self.lineItemLineFilter = re.compile('<li[^>]*?>(.+?)</li>',re.I)
-		self.charCodeFilter = re.compile('&#(\d{1,5});',re.I)
-		self.charNameFilter = re.compile('&(\w+?);')
 		self.imageAltFilter = re.compile('alt="([^"]+?)"',re.I)
 		self.titleAttrFilter = re.compile('title="([^>"]*?)"',re.I)
 		self.nameAttrFilter = re.compile('name="([^>"]*?)"',re.I)
@@ -295,15 +293,21 @@ class HTMLConverter:
 		else: bullet = '*'
 		return  '%s %s\n' % (bullet,m.group(1))
 	
-	def cUConvert(self,m): return unichr(int(m.group(1)))
-	def cTConvert(self,m):
-		return unichr(htmlentitydefs.name2codepoint.get(m.group(1),32))
-		
 	def convertHTMLCodes(self,html):
-		try:
-			html = self.charCodeFilter.sub(self.cUConvert,html)
-			html = self.charNameFilter.sub(self.cTConvert,html)
-		except:
-			pass
-		return html
+		return convertHTMLCodes(html)
+
+charCodeFilter = re.compile('&#(\d{1,5});',re.I)
+charNameFilter = re.compile('&(\w+?);')
+		
+def cUConvert(m): return unichr(int(m.group(1)))
+def cTConvert(m):
+	return unichr(htmlentitydefs.name2codepoint.get(m.group(1),32))
+	
+def convertHTMLCodes(html):
+	try:
+		html = charCodeFilter.sub(cUConvert,html)
+		html = charNameFilter.sub(cTConvert,html)
+	except:
+		pass
+	return html
 	
