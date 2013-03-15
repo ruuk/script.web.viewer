@@ -1,6 +1,10 @@
 Web Viewer Changelog
 
-Current Version : 0.9.8
+Current Version : 0.9.9
+
+*** 0.9.9 ***
+
+Added Metacafe to list of supported video URLs
 
 *** 0.9.8 ***
 

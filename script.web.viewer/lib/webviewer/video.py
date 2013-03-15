@@ -1,4 +1,4 @@
-import urllib2,re, sys, os
+import urllib, urllib2,re, sys, os, ast
 import xbmc, xbmcaddon #@UnresolvedImport
 from htmltoxbmc import convertHTMLCodes
 
@@ -83,8 +83,20 @@ class WebVideo():
 			if not info: return None
 			video.thumbnail = info.get('thumbnail','')
 			video.title = info.get('title','')
-			#video.playableCallback = self.getVimeoFLV
 			video.playable = self.getDailymotionPluginURL(ID)
+			video.isVideo = True
+		elif 'metacafe.com/' in url:
+			if just_test: return True
+			ID = self.extractMetacafeIDFromURL(url)
+			if not ID: return None
+			if just_ID: return ID
+			video = Video(ID)
+			video.sourceName = 'Metacafe'
+			info = self.getMetacafeInfo(ID)
+			if not info: return None
+			video.thumbnail = info.get('thumbnail','')
+			video.title = info.get('title','')
+			video.playable = info.get('video','')
 			video.isVideo = True
 		elif 'flic.kr/' in url or 'flickr.com/' in url:
 			if just_test: return True
@@ -130,6 +142,11 @@ class WebVideo():
 	def extractDailymotionIDFromURL(self,url):
 		#http://www.dailymotion.com/video/xy0sej_duck-dynasty-martin-s-pet-lizard_tech?search_algo=2#.UT-Ga2Q-v8Y
 		m = re.search('/video/(\w+?)_',url)
+		if m: return m.group(1)
+		
+	def extractMetacafeIDFromURL(self,url):
+		#http://www.metacafe.com/watch/10061205/stumble_through_yoostar_with_harley_morenstein_and_cousin_dave_from_epic_meal_time/
+		m = re.search('/watch/(\d+?)/',url)
 		if m: return m.group(1)
 		
 	def extractYoutubeIDFromURL(self,url):
@@ -222,6 +239,22 @@ class WebVideo():
 			pass
 		return ret
 		
+	def getMetacafeInfo(self,ID):
+		url = 'http://www.metacafe.com/watch/%s' % ID
+		html = urllib2.urlopen(urllib2.Request(url,None,{'User-Agent':'Wget/1.9.1'})).read()
+		ret = {}
+		try:
+			first = ast.literal_eval(re.search('flashVarsCache =([^;].*?);(?s)',html).group(1).strip().replace('false','False'))
+			second = ast.literal_eval(urllib.unquote(first['mediaData']).replace('false','False'))
+			#media = urllib.quote(urllib.unquote(second.get('highDefinitionMP4',second.get('MP4'))['mediaURL']).replace('\\',''))
+			media = 'http://' + urllib.quote(urllib.unquote(second.get('highDefinitionMP4',second.get('MP4'))['mediaURL']).replace('\\','').split('://',1)[-1])
+			ret['title'] = urllib.unquote(first['title'])
+			ret['video'] = media
+			ret['thumbnail'] = re.search('<meta property="og:image" content="([^"].+?)(?is)"',html).group(1)
+		except:
+			pass
+		return ret
+	
 	def getVimeoFLV(self,ID):
 		#TODO: Make this better
 		infoURL = 'http://www.vimeo.com/moogaloop/load/clip:' + ID
