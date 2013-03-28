@@ -1,4 +1,4 @@
-import xbmcaddon #@UnresolvedImport
+import xbmcaddon, xbmcvfs
 from htmltoxbmc import HTMLConverter
 import re, os, sys, time, urllib2, urlparse
 import xbmc, xbmcgui #@UnresolvedImport
@@ -10,9 +10,9 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-21-2013'
-__version__ = '0.9.9'
+__version__ = '0.9.10'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
-__language__ = __addon__.getLocalizedString
+T = __addon__.getLocalizedString
 
 THEME = 'Default'
 
@@ -115,10 +115,10 @@ class WebReader:
 		except:
 			err = ERROR('ERROR READING PAGE')
 			LOG('URL: %s' % url)
-			xbmcgui.Dialog().ok('ERROR', __language__(30100), err)
+			xbmcgui.Dialog().ok('ERROR', T(32100), err)
 			return None
 		resData = self.checkRedirect(resData, callback)
-		if not callback(80, __language__(30101)): return None
+		if not callback(80, T(32101)): return None
 		if not resData: return None
 		formsProcessed = True
 		forms = []
@@ -147,7 +147,7 @@ class WebReader:
 		#print html
 		if match:
 			LOG('REDIRECTING TO %s' % match.group('url'))
-			if not callback(3, __language__(30102)): return None
+			if not callback(3, T(32102)): return None
 			try:
 				url = match.group('url')
 				return self.readURL(url, callback)
@@ -159,7 +159,7 @@ class WebReader:
 		return resData
 	
 	def readURL(self, url, callback):
-		if not callback(5, __language__(30103)): return None
+		if not callback(5, T(32103)): return None
 		response = None
 		try:
 			response = self.browser.open(url)
@@ -173,7 +173,7 @@ class WebReader:
 		contentDisp = response.info().get('content-disposition', '')
 		#print response.info()
 		if not content.startswith('text'): return ResponseData(response.geturl(), content, content_disp=contentDisp)
-		if not callback(30, __language__(30104)): return None
+		if not callback(30, T(32104)): return None
 		html = response.read()
 		if __addon__.getSetting('inline_frames') == 'true':
 			self.framesList = []
@@ -234,16 +234,16 @@ class WebReader:
 				if c.type == 'submit':
 					if c == submit_control: break
 					ct += 1 
-		if not callback(5, __language__(30105)): return None
+		if not callback(5, T(32105)): return None
 		try:
 			res = self.browser.submit(nr=ct)
 		except:
 			self.browser.back()
 			return None
-		if not callback(60, __language__(30106)): return None
+		if not callback(60, T(32106)): return None
 		html = res.read()
 		resData = self.checkRedirect(ResponseData(res.geturl(), data=html), callback=callback) #@UnusedVariable
-		if not callback(80, __language__(30101)): return None
+		if not callback(80, T(32101)): return None
 		if not resData: return None
 		return WebPage(resData, self.browser.geturl(), forms=resData.data and self.browser.forms() or [])
 		
@@ -833,7 +833,7 @@ class ThreadWindow:
 				if self._stopControl: self._stopControl.setVisible(False)
 			if self._isMain and len(threading.enumerate()) > 1:
 				d = xbmcgui.DialogProgress()
-				d.create(__language__(30107), __language__(30108))
+				d.create(T(32107), T(32108))
 				d.update(0)
 				self.stopThreads()
 				if d.iscanceled():
@@ -1132,7 +1132,7 @@ class ViewerWindow(BaseWindow):
 		if not url:
 			default = ''
 			if __addon__.getSetting('goto_pre_filled') == 'true': default = self.page.url
-			url = doKeyboard(__language__(30111), default=default)
+			url = doKeyboard(T(32111), default=default)
 			if not url: return False
 			if not url.startswith('http://'): url = 'http://' + url
 		elif self.videoHandler.mightBeVideo(url):
@@ -1142,7 +1142,7 @@ class ViewerWindow(BaseWindow):
 					if force_video:
 						yes = True
 					else:
-						yes = xbmcgui.Dialog().yesno('Play Video?','Click YES to play the video.','Click NO to follow the link.')
+						yes = xbmcgui.Dialog().yesno(T(32164),T(32165),T(32166),'',T(32167),T(32168))
 					if yes:
 						video.play(vid.getPlayableURL())
 						return True
@@ -1172,7 +1172,7 @@ class ViewerWindow(BaseWindow):
 	def viewHistory(self):
 		options = []
 		if self.isBoxee and not self.simpleControls:
-			options.append(__language__(30133))
+			options.append(T(32133))
 			options.append('-                         -')
 		ct = 0
 		for h in self.history.history:
@@ -1182,7 +1182,7 @@ class ViewerWindow(BaseWindow):
 			options.append(t)
 			ct += 1
 		dialog = xbmcgui.Dialog()
-		idx = dialog.select(__language__(30112), options)
+		idx = dialog.select(T(32112), options)
 		if self.isBoxee:
 			if idx == 0:
 				self.openSettings()
@@ -1205,7 +1205,7 @@ class ViewerWindow(BaseWindow):
 	def getRefreshData(self, callback=None, donecallback=None):
 		page = WR.getWebPage(self.url, callback=callback)
 		if not page or not page.isDisplayable():
-			callback(100, __language__(30109))
+			callback(100, T(32109))
 		donecallback(page)
 		
 	def refreshDo(self, page):
@@ -1215,7 +1215,7 @@ class ViewerWindow(BaseWindow):
 					self.playMedia(page.url)
 				elif page.content.startswith('audio'):
 					self.playMedia(page.url, mtype='music')
-				elif xbmcgui.Dialog().yesno(__language__(30113), __language__(30114), page.getFileName(), __language__(30115) % page.content):
+				elif xbmcgui.Dialog().yesno(T(32113), T(32114), page.getFileName(), T(32115).format(page.content)):
 					self.downloadLink(page.url, page.getFileName())
 			self.endProgress()
 			if self.page: self.getControl(104).setLabel(self.page.title or self.page.url)
@@ -1453,7 +1453,7 @@ class ViewerWindow(BaseWindow):
 						citem = c.get(value)
 						label = citem.attrs.get('label', value)
 					else:
-						label = __language__(30116)
+						label = T(32116)
 					item = xbmcgui.ListItem(label=label)
 					item.setInfo('video', {'Genre':'select'})
 					item.setProperty('index', str(idx))
@@ -1477,7 +1477,7 @@ class ViewerWindow(BaseWindow):
 		if not hasControl:
 			self.addLabel('Empty Form')
 		if not hasSubmit and hasControl and __addon__.getSetting('add_missing_submit') == 'true':
-			item = xbmcgui.ListItem(label=__language__(30147))
+			item = xbmcgui.ListItem(label=T(32147))
 			item.setInfo('video', {'Genre':'submit'})
 			item.setProperty('index', str(idx))
 			self.controlList.addItem(item)
@@ -1533,7 +1533,7 @@ class ViewerWindow(BaseWindow):
 			self.submitForm(None)
 			return
 		elif ctype == 'file':
-			fname = xbmcgui.Dialog().browse(1, __language__(30117), 'files')
+			fname = xbmcgui.Dialog().browse(1, T(32117), 'files')
 			control.add_file(open(fname, 'r'), filename=os.path.basename(fname))
 			item.setLabel(fname)
 			
@@ -1548,7 +1548,7 @@ class ViewerWindow(BaseWindow):
 			options.append(cb + ' ' + unicode(i.attrs.get('label', i.name) or i.name, 'utf8', 'replace'))
 			#options.append(i.attrs.get('label',i.name) or i.name)
 		dialog = xbmcgui.Dialog()
-		idx = dialog.select(__language__(30118), options)
+		idx = dialog.select(T(32118), options)
 		if idx < 0: return False
 		i = control.items[idx]
 		if not i.disabled:
@@ -1558,9 +1558,9 @@ class ViewerWindow(BaseWindow):
 			for i in control.items:
 				if i.selected: ct += 1
 			if ct:
-				label = __language__(30119) % ct
+				label = T(32119).format(ct)
 			else:
-				label = __language__(30116)
+				label = T(32116)
 		else:
 			value = control.value[0]
 			citem = control.get(value)
@@ -1631,7 +1631,7 @@ class ViewerWindow(BaseWindow):
 		LOG('displayPage() - END')
 				
 	def doAutoClose(self, heading, message):
-		if xbmcgui.Dialog().yesno(heading, message, __language__(30148)): self.close()
+		if xbmcgui.Dialog().yesno(heading, message, T(32148)): self.close()
 		
 	def getLinks(self):
 		ulist = self.getControl(148)
@@ -1742,7 +1742,7 @@ class ViewerWindow(BaseWindow):
 			link = self.currentElement()
 		if not link.type == PE_LINK and not link.type == PE_FRAME: return
 		if link.cannotBeFollowed():
-			xbmcgui.Dialog().ok(__language__(30151), __language__(30152), '', link.cannotBeFollowed())
+			xbmcgui.Dialog().ok(T(32151), T(32152), '', link.cannotBeFollowed())
 			return
 		if link.url.startswith('#'):
 			self.gotoID(link.url)
@@ -1752,11 +1752,11 @@ class ViewerWindow(BaseWindow):
 			self.showImage(url)
 		else:
 			self.gotoURL(url)
-			#base = xbmcgui.Dialog().browse(3,__language__(30144),'files')
+			#base = xbmcgui.Dialog().browse(3,T(32144),'files')
 			#if not base: return
-			#fname,ftype = Downloader(message=__language__(30145)).downloadURL(base,link.url)
+			#fname,ftype = Downloader(message=T(32145)).downloadURL(base,link.url)
 			#if not fname: return
-			#xbmcgui.Dialog().ok(__language__(30052),__language__(30146),fname,__language__(30147) % ftype)
+			#xbmcgui.Dialog().ok(T(32052),T(32146),fname,T(32147) % ftype)
 		
 	def showImage(self, url):
 		LOG('SHOWING IMAGE: ' + url)
@@ -1812,13 +1812,13 @@ class ViewerWindow(BaseWindow):
 			#xbmcgui.unlock()
 	
 	def bookmarks(self):
-		options = [__language__(30120), __language__(30121), '-                         -']
+		options = [T(32120), T(32121), '-                         -']
 		for bm in self.bmManger.bookmarks: options.append(bm.title)
 		dialog = xbmcgui.Dialog()
-		idx = dialog.select(__language__(30122), options)
+		idx = dialog.select(T(32122), options)
 		if idx < 0: return
 		if idx == 0:
-			title = doKeyboard(__language__(30123), default=self.page.title)
+			title = doKeyboard(T(32123), default=self.page.title)
 			if title == None: title = self.page.title
 			self.bmManger.addBookmark(Bookmark(title, self.page.url))
 		elif idx == 1: self.manageBookmarks()
@@ -1833,9 +1833,9 @@ class ViewerWindow(BaseWindow):
 			options = []
 			for bm in self.bmManger.bookmarks: options.append(bm.title)
 			dialog = xbmcgui.Dialog()
-			idx = dialog.select(__language__(30124), options)
+			idx = dialog.select(T(32124), options)
 			if idx < 0: return
-			if xbmcgui.Dialog().yesno(__language__(30125), __language__(30126), __language__(30127) % self.bmManger.getBookmark(idx).title):
+			if xbmcgui.Dialog().yesno(T(32125), T(32126), T(32127).format(self.bmManger.getBookmark(idx).title)):
 				self.bmManger.removeBookmark(idx)
 	
 	def onAction(self, action):
@@ -1926,11 +1926,26 @@ class ViewerWindow(BaseWindow):
 		BaseWindow.onAction(self, action)
 		
 	def downloadLink(self, url, fname=None):
-		base = xbmcgui.Dialog().browse(3, __language__(30128), 'files')
+		base = xbmcgui.Dialog().browse(3, T(32128), 'files')
 		if not base: return
-		fname, ftype = Downloader(message=__language__(30129)).downloadURL(base, url, fname, opener=WR.browser.open)
+		cache = os.path.join(xbmc.translatePath(__addon__.getAddonInfo('profile')),'cache')
+		if not os.path.exists(cache): os.makedirs(cache)
+		fname, ftype = Downloader(message=T(32129)).downloadURL(cache, url, fname, opener=WR.browser.open)
 		if not fname: return
-		xbmcgui.Dialog().ok(__language__(30109), __language__(30130), fname, __language__(30115) % ftype)
+		local = os.path.join(cache,fname)
+		target = base + fname
+		if not os.path.exists(local):
+			xbmcgui.Dialog().ok(T(32169), T(32170))
+			return
+		try:
+			xbmcvfs.copy(local,target)
+			if not xbmcvfs.exists(target):
+				xbmcgui.Dialog().ok(T(32169), T(32171))
+		except:
+			ERROR('Failed: xbmcfs.copy()')
+			xbmcgui.Dialog().ok(T(32169), T(32171))
+		xbmcvfs.delete(local)
+		xbmcgui.Dialog().ok(T(32109), T(32130), fname, T(32115).format(ftype))
 		
 	def doMenu(self, etype=None):
 		element = self.currentElement()
@@ -1944,40 +1959,39 @@ class ViewerWindow(BaseWindow):
 							'google_search',
 							'page_search']
 		
-		options = [	__language__(30131),
-					__language__(30132),
-					__language__(30110),
-					__language__(30146),
-					__language__(30149),
-					__language__(30153)]
+		options = [	T(32131),
+					T(32132),
+					T(32110),
+					T(32146),
+					T(32149),
+					T(32153)]
 		
 		if self.simpleControls:
 			optionsMatch += ['back','forward','refresh','history','close']
-			options += [__language__(30158), __language__(30159), __language__(30160), __language__(30112),__language__(30161)]
+			options += [T(32158), T(32159), T(32160), T(32112),T(32161)]
 		
-		idx_base = len(options) - 1
 		if etype == PE_LINK:
 			optionsMatch += ['open_link','save_link']
-			options += [__language__(30134), __language__(30135)]
+			options += [T(32134), T(32135)]
 			if element.image:
 				optionsMatch.append('link_image')
-				options.append(__language__(30136))
+				options.append(T(32136))
 			if element.isImage():
 				optionsMatch.append('target_image')
-				options.append(__language__(30137))
+				options.append(T(32137))
 		elif etype == PE_IMAGE:
 			optionsMatch += ['view_image','save_image']
-			options += [__language__(30138), __language__(30139)]
+			options += [T(32138), T(32139)]
 		elif etype == PE_FORM:
 			optionsMatch.append('submit_form')
-			options.append(__language__(30140))
+			options.append(T(32140))
 		if self.videoHandler.getVideoObject(self.page.url,just_ID=True):
 			optionsMatch.append('play_video')
-			options.append(__language__(30163))
+			options.append(T(32163))
 		
 		#do dialog/handle common
 		dialog = xbmcgui.Dialog()
-		idx = dialog.select(__language__(30110), options)
+		idx = dialog.select(T(32110), options)
 		if idx < 0: return
 		
 		oid = optionsMatch[idx]
@@ -2003,14 +2017,14 @@ class ViewerWindow(BaseWindow):
 		
 	def settings(self):
 		dialog = xbmcgui.Dialog()
-		idx = dialog.select(__language__(30110), [__language__(30133), __language__(30142), __language__(30157), __language__(30162)])
+		idx = dialog.select(T(32110), [T(32133), T(32142), T(32157), T(32162)])
 		if idx < 0: return
 		
 		if idx == 0:
 			self.openSettings()
 		elif idx == 1:
 			setHome(self.page.url)
-			xbmcgui.Dialog().ok(__language__(30109), __language__(30143), self.page.getTitle())
+			xbmcgui.Dialog().ok(T(32109), T(32143), self.page.getTitle())
 		elif idx == 2:
 			self.viewPageSource()
 		elif idx == 3:
@@ -2055,7 +2069,7 @@ class ViewerWindow(BaseWindow):
 		self.setFocusId(122)
 				
 	def googleSearch(self):
-		terms = doKeyboard(__language__(30150))
+		terms = doKeyboard(T(32150))
 		if terms == None: return
 		import urllib
 		terms = urllib.quote_plus(terms)
@@ -2064,7 +2078,7 @@ class ViewerWindow(BaseWindow):
 		
 	def searchPage(self, term=None, start=None):
 		if not term:
-			term = doKeyboard(__language__(30150), default=self.lastPageSearch)
+			term = doKeyboard(T(32150), default=self.lastPageSearch)
 			if term == None: return
 		self.lastPageSearch = term
 		term = term.lower()
@@ -2083,9 +2097,9 @@ class ViewerWindow(BaseWindow):
 			self.refreshFocus()
 		else:
 			if start != None:
-				xbmcgui.Dialog().ok(__language__(30154), '%s:' % __language__(30155), '', term)
+				xbmcgui.Dialog().ok(T(32154), '%s:' % T(32155), '', term)
 			else:
-				if xbmcgui.Dialog().yesno(__language__(30154), __language__(30155), '', __language__(30156)):
+				if xbmcgui.Dialog().yesno(T(32154), T(32155), '', T(32156)):
 					self.searchPage(term, 0)
 		
 
@@ -2140,7 +2154,7 @@ class Bookmark:
 		return self
 	
 class Downloader:
-	def __init__(self, header=__language__(30129), message=''):
+	def __init__(self, header=T(32129), message=''):
 		self.message = message
 		self.prog = xbmcgui.DialogProgress()
 		self.prog.create(header, message)
@@ -2162,7 +2176,7 @@ class Downloader:
 			for url, i in zip(urllist, range(0, self.total)):
 				self.current = i
 				if self.prog.iscanceled(): break
-				self.display = __language__(30144) % (i + 1, self.total)
+				self.display = T(32144).format(i + 1, self.total)
 				self.prog.update(int((i / float(self.total)) * 100), self.message, self.display)
 				fname = os.path.join(targetdir, str(i) + ext)
 				file_list.append(fname)
@@ -2191,7 +2205,7 @@ class Downloader:
 		
 		try:
 			self.current = 0
-			self.display = __language__(30145) % os.path.basename(path)
+			self.display = T(32145).format(os.path.basename(path))
 			self.prog.update(0, self.message, self.display)
 			t, ftype = self.getUrlFile(url, path, callback=self.progCallback, opener=opener) #@UnusedVariable
 		except:

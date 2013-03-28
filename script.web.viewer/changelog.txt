@@ -1,6 +1,16 @@
 Web Viewer Changelog 
 
-Current Version : 0.9.9
+Current Version : 0.9.10
+
+*** 0.9.10 ***
+
+Fix string IDs
+Convert static strings to string IDs
+Metacafe now falls back to metacafe addon for playing
+Metacafe now handles CBS based video if "appropriate" addon is installed
+Convert %s to .format() method
+Files can now be downloaded to writable network locations
+Added failed download dialogs
 
 *** 0.9.9 ***
 

@@ -97,7 +97,11 @@ class WebVideo():
 			video.thumbnail = info.get('thumbnail','')
 			video.title = info.get('title','')
 			video.playable = info.get('video','')
-			video.isVideo = True
+			if not video.playable: video.playable = 'plugin://plugin.video.metacafe/video/%s' % ID
+			if ID.startswith('cb-'):
+				if xbmc.getCondVisibility('System.HasAddon(plugin.video.free.cable)'):
+					video.playable = 'plugin://plugin.video.free.cable/?url="%s"&mode="cbs"&sitemode="play"' % ID[3:]
+			video.isVideo = bool(video.playable)
 		elif 'flic.kr/' in url or 'flickr.com/' in url:
 			if just_test: return True
 			ID = self.getFlickrIDFromURL(url)
@@ -146,7 +150,7 @@ class WebVideo():
 		
 	def extractMetacafeIDFromURL(self,url):
 		#http://www.metacafe.com/watch/10061205/stumble_through_yoostar_with_harley_morenstein_and_cousin_dave_from_epic_meal_time/
-		m = re.search('/watch/(\d+?)/',url)
+		m = re.search('/watch/([\w-]+?)/',url)
 		if m: return m.group(1)
 		
 	def extractYoutubeIDFromURL(self,url):
@@ -244,13 +248,21 @@ class WebVideo():
 		html = urllib2.urlopen(urllib2.Request(url,None,{'User-Agent':'Wget/1.9.1'})).read()
 		ret = {}
 		try:
+			ret['thumbnail'] = re.search('<meta property="og:image" content="([^"].+?)(?is)"',html).group(1)
+		except:
+			pass
+		
+		try:
 			first = ast.literal_eval(re.search('flashVarsCache =([^;].*?);(?s)',html).group(1).strip().replace('false','False'))
+			ret['title'] = urllib.unquote(first['title'])
+		except:
+			pass
+	
+		try:
 			second = ast.literal_eval(urllib.unquote(first['mediaData']).replace('false','False'))
 			#media = urllib.quote(urllib.unquote(second.get('highDefinitionMP4',second.get('MP4'))['mediaURL']).replace('\\',''))
 			media = 'http://' + urllib.quote(urllib.unquote(second.get('highDefinitionMP4',second.get('MP4'))['mediaURL']).replace('\\','').split('://',1)[-1])
-			ret['title'] = urllib.unquote(first['title'])
 			ret['video'] = media
-			ret['thumbnail'] = re.search('<meta property="og:image" content="([^"].+?)(?is)"',html).group(1)
 		except:
 			pass
 		return ret
