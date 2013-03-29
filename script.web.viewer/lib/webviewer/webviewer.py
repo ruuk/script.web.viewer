@@ -107,9 +107,9 @@ class WebReader:
 		LOG('Getting Page at URL: ' + url)
 		if not callback: callback = self.fakeCallback
 		resData = ResponseData(url)
-		id = ''
+		ID = ''
 		urlsplit = url.split('#', 1)
-		if len(urlsplit) > 1: url, id = urlsplit
+		if len(urlsplit) > 1: url, ID = urlsplit
 		try:
 			resData = self.readURL(url, callback)
 		except:
@@ -136,7 +136,7 @@ class WebReader:
 				except:
 					ERROR('Could not process forms')
 				
-		return WebPage(resData, id=id, forms=resData.data and forms or [])
+		return WebPage(resData, ID=ID, forms=resData.data and forms or [])
 	
 	def cleanHTML(self, html):
 		return re.sub('<![^>]*?>', '', html)
@@ -327,15 +327,14 @@ class WebReader:
 # Web Page
 ################################################################################
 class WebPage:
-	def __init__(self, resData, id='', forms=[]):
+	def __init__(self, resData, ID='', forms=[]):
 		self.url = resData.url
-		end = ''
 		#if not '<a ' in resData.data and not '<img ' in resData.data and not '<form ' in resData.data: 
 		#	end = '<a href="#END">END OF PAGE</a><a name="#END"></a>'
 		self.html = resData.data
 		self.content = resData.content
 		self.contentDisp = resData.contentDisp
-		self.id = id
+		self.id = ID
 		self.title = ''
 		self.forms = []
 		self.imageURLDict = {}
@@ -403,17 +402,17 @@ class WebPage:
 					lines = stack.count('[CR]')
 					stack += part
 					pre = None
-					type = types[part]
-					if type == PE_LINK:
+					ttype = types[part]
+					if ttype == PE_LINK:
 						element = self._links[lct]
 						lct += 1
-					elif type == PE_IMAGE:
+					elif ttype == PE_IMAGE:
 						element = self._images[ict]
 						ict += 1
-					elif type == PE_FORM:
+					elif ttype == PE_FORM:
 						element = self.forms[fct]
 						fct += 1
-					elif type == PE_FRAME:
+					elif ttype == PE_FRAME:
 						element = self._frames[frct]
 						frct += 1
 					element.elementIndex = ct
@@ -432,9 +431,9 @@ class WebPage:
 			if e.displayPageIndex >= index:
 				return e
 			
-	def getElementByTypeIndex(self, type, index):
+	def getElementByTypeIndex(self, ttype, index):
 		for e in self.elements:
-			if e.type == type and e.typeIndex == index:
+			if e.type == ttype and e.typeIndex == index:
 				return e
 	
 	def forDisplay(self):
@@ -585,13 +584,13 @@ PE_FORM = 'FORM'
 PE_FRAME = 'FRAME'
 
 class PageElement:
-	def __init__(self, type=0, type_index= -1):
+	def __init__(self, ttype=0, type_index= -1):
 		self.typeIndex = type_index
 		self.elementIndex = -1
 		self.displayPageIndex = -1
 		self.lineNumber = -1
 		
-		self.type = type
+		self.type = ttype
 
 class Image(PageElement):
 	def __init__(self, url='', image_index= -1, short_index= -1, base_url=''):
@@ -1254,9 +1253,9 @@ class ViewerWindow(BaseWindow):
 	
 	def pageDown(self):
 		pos = self.pageList.getSelectedPosition()
-		max = self.pageList.size()
+		pmax = self.pageList.size()
 		ct = 0
-		for i in range(pos, max):
+		for i in range(pos, pmax):
 			item = self.pageList.getListItem(i)
 			if item.displayLen < self.CHAR_PER_LINE:
 				ct += 1
@@ -1267,14 +1266,14 @@ class ViewerWindow(BaseWindow):
 			return
 		i -= 1
 		if i < 0: i = 0
-		if i > max: return
+		if i > pmax: return
 		self.pageList.selectItem(i)
 		self.refreshFocus()
 		
-	def calculateLines(self, pos, max):
+	def calculateLines(self, pos, lmax):
 		ct = 0
 		toppos = -1
-		for i in range(max * -1, (pos * -1) + 1):
+		for i in range(lmax * -1, (pos * -1) + 1):
 			i = abs(i)
 			item = self.pageList.getListItem(i)
 			if item.displayLen < self.CHAR_PER_LINE:
@@ -1691,8 +1690,8 @@ class ViewerWindow(BaseWindow):
 		w.doModal()
 		del w
 	
-	def gotoID(self, id):
-		id = id.replace('#', '')
+	def gotoID(self, ID):
+		ID = ID.replace('#', '')
 		plist = self.pageList
 		bottom = plist.size() - 1
 		for i in range((bottom) * -1, 1):
@@ -1700,7 +1699,7 @@ class ViewerWindow(BaseWindow):
 			item = plist.getListItem(i)
 			ids = item.IDs
 			#print id,ids
-			if id in ids:
+			if ID in ids:
 				plist.selectItem(i)
 				return
 			
@@ -2107,8 +2106,8 @@ class ViewerWindowDialog(ViewerWindow, xbmcgui.WindowXMLDialog): IS_DIALOG = Tru
 class ViewerWindowNormal(ViewerWindow, xbmcgui.WindowXML): pass
 
 class BookmarksManager:
-	def __init__(self, file=''):
-		self.file = file
+	def __init__(self, bfile=''):
+		self.file = bfile
 		self.bookmarks = []
 		self.load()
 		

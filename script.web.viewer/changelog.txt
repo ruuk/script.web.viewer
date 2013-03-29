@@ -11,6 +11,7 @@ Metacafe now handles CBS based video if "appropriate" addon is installed
 Convert %s to .format() method
 Files can now be downloaded to writable network locations
 Added failed download dialogs
+Cleaned up code warnings
 
 *** 0.9.9 ***
 
