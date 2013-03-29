@@ -32,5 +32,8 @@ What it doesn't do:
     *Make web pages look good :)
     *Lots of other stuff
     </description>
+    <license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
+    <forum>http://forum.xbmc.org/showthread.php?tid=90007</forum>
+    <source>http://github.com/ruuk/script.web.viewer</source>
   </extension>
 </addon>
