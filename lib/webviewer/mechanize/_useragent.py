@@ -152,7 +152,7 @@ class UserAgentBase(_opener.OpenerDirector):
             want[scheme] = None
 
         # get rid of scheme handlers we don't want
-        for scheme, oldhandler in self._ua_handlers.items():
+        for scheme, oldhandler in self._ua_handlers.items():  # @UnusedVariable
             if scheme.startswith("_"): continue  # not a scheme handler
             if scheme not in want:
                 self._replace_handler(scheme, None)

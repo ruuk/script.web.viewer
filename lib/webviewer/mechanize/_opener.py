@@ -17,7 +17,7 @@ try:
     set
 except NameError:
     import sets
-    set = sets.Set
+    set = sets.Set  # @ReservedAssignment
 
 from _request import Request
 import _response
@@ -413,7 +413,7 @@ class OpenerFactory:
 build_opener = OpenerFactory().build_opener
 
 _opener = None
-urlopen_lock = _threading.Lock()
+urlopen_lock = _threading.Lock()  # @UndefinedVariable
 def urlopen(url, data=None, timeout=_sockettimeout._GLOBAL_DEFAULT_TIMEOUT):
     global _opener
     if _opener is None:

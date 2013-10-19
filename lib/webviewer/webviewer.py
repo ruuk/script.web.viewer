@@ -2,7 +2,7 @@ import xbmcaddon, xbmcvfs
 from htmltoxbmc import HTMLConverter
 import re, os, sys, time, urllib2, urlparse
 import xbmc, xbmcgui #@UnresolvedImport
-import mechanize, threading
+import urlparse, mechanize, threading
 import video
 
 
@@ -10,7 +10,7 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-21-2013'
-__version__ = '0.9.10'
+__version__ = '0.9.11'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 T = __addon__.getLocalizedString
 
@@ -666,20 +666,21 @@ def fullURL(baseUrl, url):
 	if not (baseUrl.startswith('file://') or baseUrl.startswith('file:///')) and baseUrl.startswith('file:/'): baseUrl = baseUrl.replace('file:/','file:///')
 	pre = baseUrl.split('://', 1)[0] + '://'
 	if not url.startswith(pre):
-		base = baseUrl.split('://', 1)[-1]
-		base = base.rsplit('/', 1)[0]
-		domain = base.split('/', 1)[0]
-		if url.startswith('/'):
-			if url.startswith('//'):
-				url =  pre.split('/', 1)[0] + url
-			else:
-				url =  pre + domain + url
-		elif url.startswith('.'):
-			if not base.endswith('/'): base += '/'
-			url =  pre + base + url
-		else:
-			url =  pre + domain + '/' + url
-	return url
+		return urlparse.urljoin(baseUrl, url)
+# 		base = baseUrl.split('://', 1)[-1]
+# 		base = base.rsplit('/', 1)[0]
+# 		domain = base.split('/', 1)[0]
+# 		if url.startswith('/'):
+# 			if url.startswith('//'):
+# 				url =  pre.split('/', 1)[0] + url
+# 			else:
+# 				url =  pre + domain + url
+# 		elif url.startswith('.'):
+# 			if not base.endswith('/'): base += '/'
+# 			url =  pre + base + url
+# 		else:
+# 			url =  pre + domain + '/' + url
+# 	return url
 
 class URLHistory:
 	def __init__(self, first):
