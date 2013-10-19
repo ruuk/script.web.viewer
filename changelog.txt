@@ -3,7 +3,11 @@ Web Viewer Changelog
 TODO:
 	Handle more video types
 
-Current Version : 0.9.11
+Current Version : 0.9.12
+
+*** 0.9.12 ***
+
+Added setting 'URL Open Timeout'
 
 *** 0.9.11 ***
 
