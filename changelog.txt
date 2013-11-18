@@ -3,7 +3,11 @@ Web Viewer Changelog
 TODO:
 	Handle more video types
 
-Current Version : 0.9.12
+Current Version : 0.9.13
+
+*** 0.9.13 ***
+
+Video handling library now gets high resolution thumbnails
 
 *** 0.9.12 ***
 
