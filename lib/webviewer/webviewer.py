@@ -10,7 +10,7 @@ __plugin__ = 'Web Viewer'
 __author__ = 'ruuk (Rick Phillips)'
 __url__ = 'http://code.google.com/p/webviewer-xbmc/'
 __date__ = '01-21-2013'
-__version__ = '0.9.12'
+__version__ = '0.9.14'
 __addon__ = xbmcaddon.Addon(id='script.web.viewer')
 T = __addon__.getLocalizedString
 

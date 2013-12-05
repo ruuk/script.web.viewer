@@ -3,11 +3,16 @@ Web Viewer Changelog
 TODO:
 	Handle more video types
 
-Current Version : 0.9.13
+Current Version : 0.9.14
+
+*** 0.9.14 ***
+
+Minor formatting change to addon.xml
+Version bump for official repo submission
 
 *** 0.9.13 ***
 
-Video handling library now gets high resolution thumbnails
+Video handling library now gets high resolution thumbnails for youtube
 
 *** 0.9.12 ***
 
