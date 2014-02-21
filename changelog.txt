@@ -3,7 +3,11 @@ Web Viewer Changelog
 TODO:
 	Handle more video types
 
-Current Version : 0.9.15
+Current Version : 0.9.16
+
+*** 0.9.16 ***
+
+Now provides youtube-dl video URL extraction in video.getVideoURL()
 
 *** 0.9.15 ***
 

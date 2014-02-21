@@ -335,8 +335,65 @@ def isPlaying():
 		return xbmc.getCondVisibility('Player.Playing') and xbmc.getCondVisibility('Player.HasVideo')
 	
 def playAt(path,h=0,m=0,s=0,ms=0):
-	json_query = xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "Player.Open", "params": {"item":{"file":"%s"},"options":{"resume":{"hours":%s,"minutes":%s,"seconds":%s,"milliseconds":%s}}}, "id": 1}' % (path,h,m,s,ms)) #@UnusedVariable
-									
+	xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "Player.Open", "params": {"item":{"file":"%s"},"options":{"resume":{"hours":%s,"minutes":%s,"seconds":%s,"milliseconds":%s}}}, "id": 1}' % (path,h,m,s,ms)) #@UnusedVariable
+
+def selectVideoQuality(formats, user_agent,quality=1):
+		minHeight = 0
+		maxHeight = 480
+		if quality > 1:
+			minHeight = 721
+			maxHeight = 1080
+		elif quality > 0:
+			minHeight = 481
+			maxHeight = 720
+			
+		defFormat = None
+		defMax = 0
+		defPref = -1000
+		prefFormat = None
+		prefMax = 0
+		prefPref = -1000
+		index = {}
+		for i in range(0,len(formats)): index[formats[i]['format_id']] = i
+		keys = sorted(index.keys())
+		fallback = formats[index[keys[0]]]
+		for fmt in keys:
+			fdata = formats[index[fmt]]
+			if not 'height' in fdata: continue
+			h = fdata['height']
+			p = fdata.get('preference',1)
+			if h >= minHeight and h <= maxHeight:
+				if h >= prefMax and p > prefPref:
+					prefMax = h
+					prefPref = p
+					prefFormat = fdata
+			elif h >= defMax and h <= maxHeight and p > defPref:
+					defMax = h
+					defFormat = fdata
+					defPref = p
+		LOG('Quality: {0}'.format(quality))
+		if prefFormat:
+			LOG('Using Preferred Format: {0} ({1}x{2})'.format(prefFormat['format'],prefFormat.get('width','?'),prefMax))
+			url = prefFormat['url']
+		elif defFormat:
+			LOG('Using Default Format: {0} ({1}x{2})'.format(defFormat['format'],defFormat.get('width','?'),defMax))
+			url = defFormat['url']
+		else:
+			LOG('Using Fallback Format: {0} ({1}x{2})'.format(fallback['format'],fallback.get('width','?'),fallback.get('height','?')))
+			url = fallback['url']
+		if url.find("rtmp") == -1:
+			url += '|' + urllib.urlencode({'User-Agent':user_agent})
+
+		return url
+		
+def getVideoURL(url,quality):
+	import youtube_dl
+	ytd = youtube_dl.YoutubeDL({'quiet':True})
+	ytd.add_default_info_extractors()
+	r = ytd.extract_info(url,download=False)
+	userAgent = 'Mozilla/5.0+(Windows+NT+6.2;+Win64;+x64;+rv:16.0.1)+Gecko/20121011+Firefox/16.0.1'
+	return selectVideoQuality(r['formats'],userAgent,quality)
+							
 #	import simplejson
 #	json_query = unicode(json_query, 'utf-8', errors='ignore')
 #	json_response = simplejson.loads(json_query)
