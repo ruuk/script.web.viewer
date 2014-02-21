@@ -53,6 +53,8 @@ def ENCODE(string):
 def ERROR(message):
 	errtext = sys.exc_info()[1]
 	print 'WEBVIEWER - %s::%s (%d) - %s' % (message, sys.exc_info()[2].tb_frame.f_code.co_name, sys.exc_info()[2].tb_lineno, errtext)
+#	import traceback
+#	traceback.print_exc()
 	return str(errtext)
 	
 def LOG(message):
@@ -1136,7 +1138,17 @@ class ViewerWindow(BaseWindow):
 		self.line = hloc.line
 		self.setHistoryControls()
 		self.refresh()
-		
+	
+	def playLinkVideo(self,url):
+		try:
+			url = video.getVideoURL(url,1)
+		except:
+			ERROR('playLinkVideo(): Failed to get video URL')
+			url = None
+		if not url:
+			xbmcgui.Dialog().ok('Sorry','Could not play the link as video.')
+		video.play(url)
+			
 	def gotoURL(self, url=None,force_video=False):
 		if not url:
 			default = ''
@@ -1980,8 +1992,8 @@ class ViewerWindow(BaseWindow):
 			options += [T(32158), T(32159), T(32160), T(32112),T(32161)]
 		
 		if etype == PE_LINK:
-			optionsMatch += ['open_link','save_link']
-			options += [T(32134), T(32135)]
+			optionsMatch += ['open_link','save_link','link_video']
+			options += [T(32134), T(32135),'Play Link Video']
 			if element.image:
 				optionsMatch.append('link_image')
 				options.append(T(32136))
@@ -1994,7 +2006,7 @@ class ViewerWindow(BaseWindow):
 		elif etype == PE_FORM:
 			optionsMatch.append('submit_form')
 			options.append(T(32140))
-		if self.videoHandler.getVideoObject(self.page.url,just_ID=True):
+		if self.page and self.videoHandler.mightBeVideo(self.page.url):
 			optionsMatch.append('play_video')
 			options.append(T(32163))
 		
@@ -2017,6 +2029,7 @@ class ViewerWindow(BaseWindow):
 		elif oid == 'close': self.close()
 		elif oid == 'open_link': self.linkSelected()
 		elif oid == 'save_link': self.downloadLink(element.fullURL())
+		elif oid == 'link_video': self.playLinkVideo(element.fullURL())
 		elif oid == 'link_image': self.showImage(fullURL(self.url, element.image))
 		elif oid == 'target_image': self.showImage(element.fullURL())
 		elif oid == 'view_image': self.showImage(element.fullURL())

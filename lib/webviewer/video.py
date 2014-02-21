@@ -17,6 +17,8 @@ def getVideoPlayable(sourceName,ID):
 	elif sourceName == 'YouTube':
 		return WebVideo().getYoutubePluginURL(ID)
 	
+YTDL = None
+
 class Video():
 	def __init__(self,ID=None):
 		self.ID = ID
@@ -118,12 +120,22 @@ class WebVideo():
 				return video
 			video.playable = self.getFlickrPluginURL(ID)
 		else:
-			return None
+			try:
+				video = getYoutubeDLVideo(url)
+				if not video: return None
+			except:
+				ERROR('getYoutubeDLVideo() failed')
+				return None
+			
 		LOG('Video ID: ' + video.ID)
 		return video
 	
 	def mightBeVideo(self,url):
-		return self.getVideoObject(url, just_test=True)
+		ytdl = getYTDL()
+		for ies in ytdl._ies:
+			if ies.suitable(url): return True
+		return False
+		#return self.getVideoObject(url, just_test=True)
 	
 	def getFlickrPluginURL(self,ID):
 		return 'plugin://plugin.image.flickr/?video_id=' + ID
@@ -337,7 +349,20 @@ def isPlaying():
 def playAt(path,h=0,m=0,s=0,ms=0):
 	xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "Player.Open", "params": {"item":{"file":"%s"},"options":{"resume":{"hours":%s,"minutes":%s,"seconds":%s,"milliseconds":%s}}}, "id": 1}' % (path,h,m,s,ms)) #@UnusedVariable
 
-def selectVideoQuality(formats, user_agent,quality=1):
+def getYoutubeDLVideo(url):
+	ytdl = getYTDL()
+	r = ytdl.extract_info(url,download=False)
+	userAgent = 'Mozilla/5.0+(Windows+NT+6.2;+Win64;+x64;+rv:16.0.1)+Gecko/20121011+Firefox/16.0.1'
+	url =  selectVideoQuality(r,userAgent, 1)
+	if not url: return None
+	video = Video(r.get('id',''))
+	video.playable = url
+	video.title = r.get('title','')
+	video.thumbnail = r.get('thumbnail','')
+	return video
+	
+def selectVideoQuality(r, user_agent,quality=1):
+		formats = r['formats']
 		minHeight = 0
 		maxHeight = 480
 		if quality > 1:
@@ -363,11 +388,11 @@ def selectVideoQuality(formats, user_agent,quality=1):
 			h = fdata['height']
 			p = fdata.get('preference',1)
 			if h >= minHeight and h <= maxHeight:
-				if h >= prefMax and p > prefPref:
+				if (h >= prefMax and p > prefPref) or (h > prefMax and p >= prefPref):
 					prefMax = h
 					prefPref = p
 					prefFormat = fdata
-			elif h >= defMax and h <= maxHeight and p > defPref:
+			elif(h >= defMax and h <= maxHeight and p > defPref) or (h > defMax and h <= maxHeight and p >= defPref):
 					defMax = h
 					defFormat = fdata
 					defPref = p
@@ -383,16 +408,25 @@ def selectVideoQuality(formats, user_agent,quality=1):
 			url = fallback['url']
 		if url.find("rtmp") == -1:
 			url += '|' + urllib.urlencode({'User-Agent':user_agent})
+		else:
+			url += ' playpath='+fdata['play_path']
 
 		return url
-		
+	
+def getYTDL():
+	if not YTDL:
+		import youtube_dl
+		global YTDL
+		YTDL = youtube_dl.YoutubeDL({'quiet':True})
+		#YTDL = youtube_dl.YoutubeDL({'verbose':True})
+		YTDL.add_default_info_extractors()
+	return YTDL
+	
 def getVideoURL(url,quality):
-	import youtube_dl
-	ytd = youtube_dl.YoutubeDL({'quiet':True})
-	ytd.add_default_info_extractors()
-	r = ytd.extract_info(url,download=False)
+	ytdl = getYTDL()
+	r = ytdl.extract_info(url,download=False)
 	userAgent = 'Mozilla/5.0+(Windows+NT+6.2;+Win64;+x64;+rv:16.0.1)+Gecko/20121011+Firefox/16.0.1'
-	return selectVideoQuality(r['formats'],userAgent,quality)
+	return selectVideoQuality(r,userAgent,quality)
 							
 #	import simplejson
 #	json_query = unicode(json_query, 'utf-8', errors='ignore')
