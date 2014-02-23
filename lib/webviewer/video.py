@@ -5,8 +5,17 @@ from htmltoxbmc import convertHTMLCodes
 def LOG(text):
 	print 'WEBVIEWER: %s' % text
 	
-def ERROR(text):
-	LOG('ERROR: %s' % repr(text))
+def ERROR(message):
+	errtext = sys.exc_info()[1]
+	print 'WEBVIEWER - %s::%s (%d) - %s' % (message, sys.exc_info()[2].tb_frame.f_code.co_name, sys.exc_info()[2].tb_lineno, errtext)
+#	import traceback
+#	traceback.print_exc()
+	return str(errtext)
+try:
+	import youtube_dl
+except:
+	ERROR('Failded to import youtube-dl')
+	youtube_dl = None
 
 def getVideoInfo(url):
 	return WebVideo().getVideoObject(url)
@@ -18,6 +27,7 @@ def getVideoPlayable(sourceName,ID):
 		return WebVideo().getYoutubePluginURL(ID)
 	
 YTDL = None
+DISABLE_DASH_VIDEO = True
 
 class Video():
 	def __init__(self,ID=None):
@@ -28,6 +38,7 @@ class Video():
 		self.embed = ''
 		self.page = ''
 		self.playable = ''
+		self.allPlayable = None
 		self.title = ''
 		self.sourceName = ''
 		self.playableCallback = None
@@ -36,6 +47,11 @@ class Video():
 	def playableURL(self):
 		return self.playable or self.media
 	
+	def hasMultiplePlayable(self):
+		if not self.allPlayable: return False
+		if len(self.allPlayable) > 1: return True
+		return False
+		
 	def getPlayableURL(self):
 		if not self.playableCallback: return self.playableURL()
 		url = self.playableCallback(self.ID)
@@ -49,7 +65,14 @@ class WebVideo():
 	def __init__(self):
 		self.modules = {}
 		
-	def getVideoObject(self,url,just_test=False,just_ID=False):
+	def getVideoObject(self,url,just_test=False,just_ID=False,quality=1):
+		try:
+			video = getYoutubeDLVideo(url,quality)
+			if not video: return None
+		except:
+			ERROR('getYoutubeDLVideo() failed')
+			return None
+		return video
 		if 'youtu.be' in url or 'youtube.com' in url:
 			if just_test: return True
 			ID = self.extractYoutubeIDFromURL(url)
@@ -133,7 +156,8 @@ class WebVideo():
 	def mightBeVideo(self,url):
 		ytdl = getYTDL()
 		for ies in ytdl._ies:
-			if ies.suitable(url): return True
+			if ies.suitable(url) and ies.IE_NAME != 'generic':
+				return True
 		return False
 		#return self.getVideoObject(url, just_test=True)
 	
@@ -349,20 +373,30 @@ def isPlaying():
 def playAt(path,h=0,m=0,s=0,ms=0):
 	xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "Player.Open", "params": {"item":{"file":"%s"},"options":{"resume":{"hours":%s,"minutes":%s,"seconds":%s,"milliseconds":%s}}}, "id": 1}' % (path,h,m,s,ms)) #@UnusedVariable
 
-def getYoutubeDLVideo(url):
+def disableDashVideo(disable):
+	global DISABLE_DASH_VIDEO
+	DISABLE_DASH_VIDEO = disable
+	
+def getYoutubeDLVideo(url,quality=1):
 	ytdl = getYTDL()
 	r = ytdl.extract_info(url,download=False)
 	userAgent = 'Mozilla/5.0+(Windows+NT+6.2;+Win64;+x64;+rv:16.0.1)+Gecko/20121011+Firefox/16.0.1'
-	url =  selectVideoQuality(r,userAgent, 1)
-	if not url: return None
+	urls =  selectVideoQuality(r,userAgent, quality)
+	if not urls: return None
 	video = Video(r.get('id',''))
-	video.playable = url
-	video.title = r.get('title','')
-	video.thumbnail = r.get('thumbnail','')
+	video.playable = urls[0]['url']
+	video.allPlayable = urls
+	video.title = r.get('title',urls[0]['title'])
+	video.thumbnail = r.get('thumbnail',urls[0]['thumbnail'])
 	return video
 	
 def selectVideoQuality(r, user_agent,quality=1):
-		formats = r['formats']
+		if 'entries' in r and not 'formats' in r:
+			entries = r['entries']
+		elif 'formats' in r and r['formats']:
+			entries = [r]
+		elif 'url' in r:
+			return [{'url':r['url'],'title':r.get('title',''),'thumbnail':r.get('thumbnail','')}]
 		minHeight = 0
 		maxHeight = 480
 		if quality > 1:
@@ -371,56 +405,69 @@ def selectVideoQuality(r, user_agent,quality=1):
 		elif quality > 0:
 			minHeight = 481
 			maxHeight = 720
-			
-		defFormat = None
-		defMax = 0
-		defPref = -1000
-		prefFormat = None
-		prefMax = 0
-		prefPref = -1000
-		index = {}
-		for i in range(0,len(formats)): index[formats[i]['format_id']] = i
-		keys = sorted(index.keys())
-		fallback = formats[index[keys[0]]]
-		for fmt in keys:
-			fdata = formats[index[fmt]]
-			if not 'height' in fdata: continue
-			h = fdata['height']
-			p = fdata.get('preference',1)
-			if h >= minHeight and h <= maxHeight:
-				if (h >= prefMax and p > prefPref) or (h > prefMax and p >= prefPref):
-					prefMax = h
-					prefPref = p
-					prefFormat = fdata
-			elif(h >= defMax and h <= maxHeight and p > defPref) or (h > defMax and h <= maxHeight and p >= defPref):
-					defMax = h
-					defFormat = fdata
-					defPref = p
 		LOG('Quality: {0}'.format(quality))
-		if prefFormat:
-			LOG('Using Preferred Format: {0} ({1}x{2})'.format(prefFormat['format'],prefFormat.get('width','?'),prefMax))
-			url = prefFormat['url']
-		elif defFormat:
-			LOG('Using Default Format: {0} ({1}x{2})'.format(defFormat['format'],defFormat.get('width','?'),defMax))
-			url = defFormat['url']
-		else:
-			LOG('Using Fallback Format: {0} ({1}x{2})'.format(fallback['format'],fallback.get('width','?'),fallback.get('height','?')))
-			url = fallback['url']
-		if url.find("rtmp") == -1:
-			url += '|' + urllib.urlencode({'User-Agent':user_agent})
-		else:
-			url += ' playpath='+fdata['play_path']
+		urls = []
+		for entry in entries:
+			defFormat = None
+			defMax = 0
+			defPref = -1000
+			prefFormat = None
+			prefMax = 0
+			prefPref = -1000
+			index = {}
+			formats = entry['formats']
+			for i in range(0,len(formats)): index[formats[i]['format_id']] = i
+			keys = sorted(index.keys())
+			fallback = formats[index[keys[0]]]
+			for fmt in keys:
+				fdata = formats[index[fmt]]
+				if not 'height' in fdata: continue
+				if DISABLE_DASH_VIDEO and 'dash' in fdata.get('format_note','').lower(): continue
+				h = fdata['height']
+				p = fdata.get('preference',1)
+				if h >= minHeight and h <= maxHeight:
+					if (h >= prefMax and p > prefPref) or (h > prefMax and p >= prefPref):
+						prefMax = h
+						prefPref = p
+						prefFormat = fdata
+				elif(h >= defMax and h <= maxHeight and p > defPref) or (h > defMax and h <= maxHeight and p >= defPref):
+						defMax = h
+						defFormat = fdata
+						defPref = p
+			if prefFormat:
+				LOG('[{3}] Using Preferred Format: {0} ({1}x{2})'.format(prefFormat['format'],prefFormat.get('width','?'),prefMax,entry.get('title','').encode('ascii','replace')))
+				url = prefFormat['url']
+			elif defFormat:
+				LOG('[{3}] Using Default Format: {0} ({1}x{2})'.format(defFormat['format'],defFormat.get('width','?'),defMax,entry.get('title','').encode('ascii','replace')))
+				url = defFormat['url']
+			else:
+				LOG('[{3}] Using Fallback Format: {0} ({1}x{2})'.format(fallback['format'],fallback.get('width','?'),fallback.get('height','?'),entry.get('title','').encode('ascii','replace')))
+				url = fallback['url']
+			if url.find("rtmp") == -1:
+				url += '|' + urllib.urlencode({'User-Agent':entry.get('user_agent') or user_agent})
+			else:
+				url += ' playpath='+fdata['play_path']
+			urls.append({'url':url,'title':entry.get('title',''),'thumbnail':entry.get('thumbnail','')})
+		return urls
 
-		return url
-	
+class YoutubeDLWrapper(youtube_dl.YoutubeDL):
+	def __init__(self, params=None,blacklist=None):
+		self._blacklist = blacklist or []
+		youtube_dl.YoutubeDL.__init__(self,params)
+		
+	def add_info_extractor(self, ie):
+		if ie.IE_NAME in self._blacklist: return
+		youtube_dl.YoutubeDL.add_info_extractor(self,ie)
+
 def getYTDL():
-	if not YTDL:
-		import youtube_dl
-		global YTDL
-		YTDL = youtube_dl.YoutubeDL({'quiet':True})
-		#YTDL = youtube_dl.YoutubeDL({'verbose':True})
-		YTDL.add_default_info_extractors()
+	if YTDL: return YTDL
+	global YTDL
+	blacklist = ['youtube:playlist', 'youtube:toplist', 'youtube:channel', 'youtube:user', 'youtube:search', 'youtube:show', 'youtube:favorites', 'youtube:truncated_url','vimeo:channel', 'vimeo:user', 'vimeo:album', 'vimeo:group', 'vimeo:review','generic']
+	YTDL = YoutubeDLWrapper({'quiet':True},blacklist)
+	#YTDL = youtube_dl.YoutubeDL({'verbose':True,'noplaylist':True,'playlistend':10})
+	YTDL.add_default_info_extractors()
 	return YTDL
+	
 	
 def getVideoURL(url,quality):
 	ytdl = getYTDL()
@@ -428,10 +475,6 @@ def getVideoURL(url,quality):
 	userAgent = 'Mozilla/5.0+(Windows+NT+6.2;+Win64;+x64;+rv:16.0.1)+Gecko/20121011+Firefox/16.0.1'
 	return selectVideoQuality(r,userAgent,quality)
 							
-#	import simplejson
-#	json_query = unicode(json_query, 'utf-8', errors='ignore')
-#	json_response = simplejson.loads(json_query)
-#	print json_response
 	
 #http://vimeo.com/moogaloop.swf?clip_id=38759453
 #http://vimeo.com/api/v2/video/38759453.json

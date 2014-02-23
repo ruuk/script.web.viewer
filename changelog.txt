@@ -3,7 +3,11 @@ Web Viewer Changelog
 TODO:
 	Handle more video types
 
-Current Version : 0.9.16
+Current Version : 0.9.17
+
+*** 0.9.17 ***
+
+Now uses youtube-dl to detect video URLs and extract video streams
 
 *** 0.9.16 ***
 

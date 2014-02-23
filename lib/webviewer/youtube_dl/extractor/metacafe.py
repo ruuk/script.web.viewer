@@ -166,6 +166,10 @@ class MetacafeIE(InfoExtractor):
 
         video_title = self._html_search_regex(r'(?im)<title>(.*) - Video</title>', webpage, u'title')
         description = self._og_search_description(webpage)
+        try:
+            thumbnail = re.search('<meta property="og:image" content="([^"].+?)(?is)"',webpage).group(1)
+        except:
+            thumbnail = ''
         video_uploader = self._html_search_regex(
                 r'submitter=(.*?);|googletag\.pubads\(\)\.setTargeting\("(?:channel|submiter)","([^"]+)"\);',
                 webpage, u'uploader nickname', fatal=False)
@@ -183,6 +187,7 @@ class MetacafeIE(InfoExtractor):
             'uploader': video_uploader,
             'upload_date':  None,
             'title':    video_title,
+            'thumbnail':thumbnail,
             'ext':      video_ext,
             'age_limit': age_limit,
         }

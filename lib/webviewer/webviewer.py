@@ -1138,16 +1138,6 @@ class ViewerWindow(BaseWindow):
 		self.line = hloc.line
 		self.setHistoryControls()
 		self.refresh()
-	
-	def playLinkVideo(self,url):
-		try:
-			url = video.getVideoURL(url,1)
-		except:
-			ERROR('playLinkVideo(): Failed to get video URL')
-			url = None
-		if not url:
-			xbmcgui.Dialog().ok('Sorry','Could not play the link as video.')
-		video.play(url)
 			
 	def gotoURL(self, url=None,force_video=False):
 		if not url:
@@ -1165,7 +1155,16 @@ class ViewerWindow(BaseWindow):
 					else:
 						yes = xbmcgui.Dialog().yesno(T(32164),T(32165),T(32166),'',T(32167),T(32168))
 					if yes:
-						video.play(vid.getPlayableURL())
+						if vid.hasMultiplePlayable():
+							vlist = []
+							for info in vid.allPlayable:
+								vlist.append(info['title'] or '?')
+							idx = xbmcgui.Dialog().select('Select Video',vlist)
+							if idx < 0: return
+							url = vid.allPlayable[idx]['url']
+						else:
+							url = vid.getPlayableURL()
+						video.play(url)
 						return True
 			except:
 				ERROR('Failed play video')
@@ -1185,7 +1184,7 @@ class ViewerWindow(BaseWindow):
 	
 	def _isBoxee(self):
 		try:
-			import mc #@UnresolvedImport @UnusedImport
+			import mc #analysis:ignore
 			return True
 		except:
 			return False
@@ -1992,8 +1991,8 @@ class ViewerWindow(BaseWindow):
 			options += [T(32158), T(32159), T(32160), T(32112),T(32161)]
 		
 		if etype == PE_LINK:
-			optionsMatch += ['open_link','save_link','link_video']
-			options += [T(32134), T(32135),'Play Link Video']
+			optionsMatch += ['open_link','save_link']
+			options += [T(32134), T(32135)]
 			if element.image:
 				optionsMatch.append('link_image')
 				options.append(T(32136))
@@ -2029,7 +2028,6 @@ class ViewerWindow(BaseWindow):
 		elif oid == 'close': self.close()
 		elif oid == 'open_link': self.linkSelected()
 		elif oid == 'save_link': self.downloadLink(element.fullURL())
-		elif oid == 'link_video': self.playLinkVideo(element.fullURL())
 		elif oid == 'link_image': self.showImage(fullURL(self.url, element.image))
 		elif oid == 'target_image': self.showImage(element.fullURL())
 		elif oid == 'view_image': self.showImage(element.fullURL())
