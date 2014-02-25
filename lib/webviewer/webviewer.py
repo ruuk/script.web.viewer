@@ -3,7 +3,7 @@ from htmltoxbmc import HTMLConverter
 import re, os, sys, time, urllib2, urlparse
 import xbmc, xbmcgui #@UnresolvedImport
 import mechanize, threading  # @UnresolvedImport
-import video
+import YDStreamExtractor as StreamExtractor
 
 
 __plugin__ = 'Web Viewer'
@@ -1103,7 +1103,6 @@ class ViewerWindow(BaseWindow):
 		self.lastPageSearch = ''
 		self.bmManger = BookmarksManager(os.path.join(xbmc.translatePath(__addon__.getAddonInfo('profile')), 'bookmarks'))
 		self.standalone = True
-		self.videoHandler = video.WebVideo()
 		BaseWindow.__init__(self, *args, **kwargs)
 		
 	def onInit(self):
@@ -1146,25 +1145,25 @@ class ViewerWindow(BaseWindow):
 			url = doKeyboard(T(32111), default=default)
 			if not url: return False
 			if not url.startswith('http://'): url = 'http://' + url
-		elif self.videoHandler.mightBeVideo(url):
+		elif StreamExtractor.mightHaveVideo(url):
 			try:
-				vid = self.videoHandler.getVideoObject(url)
-				if vid and vid.isVideo:
+				vid = StreamExtractor.getVideoInfo(url)
+				if vid:
 					if force_video:
 						yes = True
 					else:
 						yes = xbmcgui.Dialog().yesno(T(32164),T(32165),T(32166),'',T(32167),T(32168))
 					if yes:
-						if vid.hasMultiplePlayable():
+						if vid.hasMultipleStreams():
 							vlist = []
-							for info in vid.allPlayable:
+							for info in vid.streams():
 								vlist.append(info['title'] or '?')
 							idx = xbmcgui.Dialog().select('Select Video',vlist)
 							if idx < 0: return
-							url = vid.allPlayable[idx]['url']
+							url = vid.streams()[idx]['url']
 						else:
-							url = vid.getPlayableURL()
-						video.play(url)
+							url = vid.streamURL()
+						StreamExtractor.play(url)
 						return True
 			except:
 				ERROR('Failed play video')
@@ -1937,7 +1936,7 @@ class ViewerWindow(BaseWindow):
 			self.focusElementList()
 			return
 		elif action.getId() == ACTION_PLAYER_PLAY:
-			if self.videoHandler.getVideoObject(self.page.url,just_ID=True):
+			if StreamExtractor.getVideoInfo(self.page.url):
 				self.gotoURL(self.page.url,force_video=True)
 				return
 			self.refresh()
@@ -2005,7 +2004,7 @@ class ViewerWindow(BaseWindow):
 		elif etype == PE_FORM:
 			optionsMatch.append('submit_form')
 			options.append(T(32140))
-		if self.page and self.videoHandler.mightBeVideo(self.page.url):
+		if self.page and StreamExtractor.mightHaveVideo(self.page.url):
 			optionsMatch.append('play_video')
 			options.append(T(32163))
 		

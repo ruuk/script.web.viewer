@@ -3,7 +3,12 @@ Web Viewer Changelog
 TODO:
 	Handle more video types
 
-Current Version : 0.9.17
+Current Version : 0.9.18
+
+*** 0.9.18 ***
+
+Move video functions out to separate addon module
+Added import for script.module.youtube.dl to addon.xml
 
 *** 0.9.17 ***
 
