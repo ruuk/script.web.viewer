@@ -3,7 +3,11 @@ Web Viewer Changelog
 TODO:
 	Handle more video types
 
-Current Version : 0.9.18
+Current Version : 0.9.19
+
+*** 0.9.19 ***
+
+Added the ability to download videos
 
 *** 0.9.18 ***
 

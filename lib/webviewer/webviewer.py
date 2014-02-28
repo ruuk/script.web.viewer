@@ -4,6 +4,7 @@ import re, os, sys, time, urllib2, urlparse
 import xbmc, xbmcgui #@UnresolvedImport
 import mechanize, threading  # @UnresolvedImport
 import YDStreamExtractor as StreamExtractor
+import YDStreamUtils as StreamUtils
 
 
 __plugin__ = 'Web Viewer'
@@ -1138,6 +1139,27 @@ class ViewerWindow(BaseWindow):
 		self.setHistoryControls()
 		self.refresh()
 			
+	def downloadVideo(self, url):
+		try:
+			vid = StreamExtractor.getVideoInfo(url)
+			if vid:
+				if vid.hasMultipleStreams():
+					vlist = []
+					for info in vid.streams():
+						vlist.append(info['title'] or '?')
+					idx = xbmcgui.Dialog().select('Select Video',vlist)
+					if idx < 0: return
+					stream = vid.streams()[idx]
+				else:
+					stream = vid.streams()[0]
+				formatID = stream.get('formatID')
+				title = stream.get('title')
+				StreamExtractor.handleDownload(url,formatID,title)
+				return True
+		except:
+			ERROR('Failed to download video')
+			return False
+
 	def gotoURL(self, url=None,force_video=False):
 		if not url:
 			default = ''
@@ -1163,10 +1185,10 @@ class ViewerWindow(BaseWindow):
 							url = vid.streams()[idx]['url']
 						else:
 							url = vid.streamURL()
-						StreamExtractor.play(url)
+						StreamUtils.play(url)
 						return True
 			except:
-				ERROR('Failed play video')
+				ERROR('Failed to play video')
 				return False
 		old = HistoryLocation(self.page and self.page.url or self.url, self.pageList.getSelectedPosition())
 		new = HistoryLocation(url)
@@ -1988,7 +2010,7 @@ class ViewerWindow(BaseWindow):
 		if self.simpleControls:
 			optionsMatch += ['back','forward','refresh','history','close']
 			options += [T(32158), T(32159), T(32160), T(32112),T(32161)]
-		
+		elementURL = element and element.fullURL() or ''
 		if etype == PE_LINK:
 			optionsMatch += ['open_link','save_link']
 			options += [T(32134), T(32135)]
@@ -2004,9 +2026,13 @@ class ViewerWindow(BaseWindow):
 		elif etype == PE_FORM:
 			optionsMatch.append('submit_form')
 			options.append(T(32140))
+		if StreamExtractor.mightHaveVideo(elementURL):
+			optionsMatch.append('download_video')
+			options.append('Download Video')
+			
 		if self.page and StreamExtractor.mightHaveVideo(self.page.url):
-			optionsMatch.append('play_video')
-			options.append(T(32163))
+			optionsMatch += ['play_video','download_page_video']
+			options += [T(32163),'Download Page Video']
 		
 		#do dialog/handle common
 		dialog = xbmcgui.Dialog()
@@ -2026,13 +2052,15 @@ class ViewerWindow(BaseWindow):
 		elif oid == 'history': self.viewHistory()
 		elif oid == 'close': self.close()
 		elif oid == 'open_link': self.linkSelected()
-		elif oid == 'save_link': self.downloadLink(element.fullURL())
+		elif oid == 'save_link': self.downloadLink(elementURL)
 		elif oid == 'link_image': self.showImage(fullURL(self.url, element.image))
-		elif oid == 'target_image': self.showImage(element.fullURL())
-		elif oid == 'view_image': self.showImage(element.fullURL())
-		elif oid == 'save_image': self.downloadLink(element.fullURL())
+		elif oid == 'target_image': self.showImage(elementURL)
+		elif oid == 'view_image': self.showImage(elementURL)
+		elif oid == 'save_image': self.downloadLink(elementURL)
 		elif oid == 'submit_form': self.submitForm(None)
 		elif oid == 'play_video': self.gotoURL(self.page.url,force_video=True)
+		elif oid == 'download_video': self.downloadVideo(elementURL)
+		elif oid == 'download_page_video': self.downloadVideo(self.page.url)
 		
 	def settings(self):
 		dialog = xbmcgui.Dialog()
