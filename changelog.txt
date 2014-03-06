@@ -3,7 +3,11 @@ Web Viewer Changelog
 TODO:
 	Handle more video types
 
-Current Version : 0.9.19
+Current Version : 0.9.20
+
+*** 0.9.20 ***
+
+Internal modifications to match youtube-dl module refactoring
 
 *** 0.9.19 ***
 

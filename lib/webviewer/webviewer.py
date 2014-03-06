@@ -1149,12 +1149,8 @@ class ViewerWindow(BaseWindow):
 						vlist.append(info['title'] or '?')
 					idx = xbmcgui.Dialog().select('Select Video',vlist)
 					if idx < 0: return
-					stream = vid.streams()[idx]
-				else:
-					stream = vid.streams()[0]
-				formatID = stream.get('formatID')
-				title = stream.get('title')
-				StreamExtractor.handleDownload(url,formatID,title)
+					vid.selectStream(idx)
+				StreamExtractor.handleDownload(vid)
 				return True
 		except:
 			ERROR('Failed to download video')
@@ -1182,10 +1178,8 @@ class ViewerWindow(BaseWindow):
 								vlist.append(info['title'] or '?')
 							idx = xbmcgui.Dialog().select('Select Video',vlist)
 							if idx < 0: return
-							url = vid.streams()[idx]['url']
-						else:
-							url = vid.streamURL()
-						StreamUtils.play(url)
+							vid.selectStream(idx)
+						StreamUtils.play(vid.streamURL())
 						return True
 			except:
 				ERROR('Failed to play video')
